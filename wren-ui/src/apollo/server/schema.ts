@@ -606,6 +606,7 @@ export const typeDefs = gql`
     question: String!
     # Used for follow-up questions
     threadId: Int
+    skillIds: [String!]
   }
 
   enum AskingTaskStatus {
@@ -668,6 +669,7 @@ export const typeDefs = gql`
     invalidSql: String
     traceId: String
     queryId: String
+    appliedSkills: [String!]
   }
 
   input InstantRecommendedQuestionsInput {
@@ -1110,6 +1112,73 @@ export const typeDefs = gql`
     id: Int!
   }
 
+  # Skills Library
+  type Skill {
+    id: String!
+    slug: String!
+    name: String!
+    description: String!
+    category: String!
+    tags: [String!]!
+    triggers: [String!]!
+    questions: [String!]!
+    content: String!
+    rawMarkdown: String!
+    enabled: Boolean!
+    isGlobal: Boolean!
+    isShared: Boolean!
+    isBuiltin: Boolean!
+    projectId: String
+    author: String!
+    version: String!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  input CreateSkillInput {
+    slug: String
+    name: String
+    description: String
+    category: String
+    tags: [String!]
+    triggers: [String!]
+    questions: [String!]
+    content: String
+    rawMarkdown: String
+    enabled: Boolean
+    isGlobal: Boolean
+    isShared: Boolean
+    author: String
+    version: String
+  }
+
+  input UpdateSkillInput {
+    slug: String
+    name: String
+    description: String
+    category: String
+    tags: [String!]
+    triggers: [String!]
+    questions: [String!]
+    content: String
+    rawMarkdown: String
+    enabled: Boolean
+    isGlobal: Boolean
+    isShared: Boolean
+    author: String
+    version: String
+  }
+
+  input ImportSkillInput {
+    rawMarkdown: String!
+    isShared: Boolean
+    overwrite: Boolean
+  }
+
+  input SkillWhereInput {
+    id: String!
+  }
+
   # Query and Mutation
   type Query {
     # On Boarding Steps
@@ -1161,6 +1230,9 @@ export const typeDefs = gql`
     sqlPairs: [SqlPair]!
     # Instructions
     instructions: [Instruction]!
+    # Skills Library
+    skills: [Skill!]!
+    skill(where: SkillWhereInput!): Skill
 
     # Api History
     apiHistory(
@@ -1312,5 +1384,10 @@ export const typeDefs = gql`
       data: UpdateInstructionInput!
     ): Instruction!
     deleteInstruction(where: InstructionWhereInput!): Boolean!
+    # Skills Library
+    createSkill(data: CreateSkillInput!): Skill!
+    updateSkill(where: SkillWhereInput!, data: UpdateSkillInput!): Skill!
+    importSkill(data: ImportSkillInput!): Skill!
+    deleteSkill(where: SkillWhereInput!): Boolean!
   }
 `;

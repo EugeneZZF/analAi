@@ -1,5 +1,6 @@
 *
 !src
+!skills
 !entrypoint.sh
 !pyproject.toml
 src/eval

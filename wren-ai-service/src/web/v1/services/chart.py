@@ -65,8 +65,10 @@ class ChartService:
         pipelines: Dict[str, BasicPipeline],
         maxsize: int = 1_000_000,
         ttl: int = 120,
+        skills_service=None,
     ):
         self._pipelines = pipelines
+        self._skills_service = skills_service
         self._chart_results: Dict[str, ChartResultResponse] = TTLCache(
             maxsize=maxsize, ttl=ttl
         )
@@ -139,13 +141,27 @@ class ChartService:
                 trace_id=trace_id,
             )
 
+            custom_instruction = chart_request.custom_instruction
+            if self._skills_service is not None:
+                matched_skills = self._skills_service.match_skills(
+                    query=chart_request.query,
+                    project_id=chart_request.project_id,
+                )
+                skill_block = self._skills_service.format_skills_prompt_block(
+                    matched_skills
+                )
+                if skill_block:
+                    custom_instruction = "\n\n".join(
+                        filter(None, [custom_instruction, skill_block])
+                    )
+
             chart_generation_result = await self._pipelines["chart_generation"].run(
                 query=chart_request.query,
                 sql=chart_request.sql,
                 data=sql_data,
                 language=chart_request.configurations.language,
                 remove_data_from_chart_schema=chart_request.remove_data_from_chart_schema,
-                custom_instruction=chart_request.custom_instruction,
+                custom_instruction=custom_instruction,
             )
             chart_result = chart_generation_result["post_process"]["results"]
 

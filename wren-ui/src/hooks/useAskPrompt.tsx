@@ -18,6 +18,10 @@ import {
   useCreateInstantRecommendedQuestionsMutation,
   useInstantRecommendedQuestionsLazyQuery,
 } from '@/apollo/client/graphql/home.generated';
+import {
+  useSkillsQuery,
+  SkillFragment,
+} from '@/apollo/client/graphql/skills.generated';
 import useAskingStreamTask from './useAskingStreamTask';
 import { THREAD } from '@/apollo/client/graphql/home';
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
@@ -160,6 +164,14 @@ const handleUpdateRerunAskingTaskCache = (
 export default function useAskPrompt(threadId?: number) {
   const [originalQuestion, setOriginalQuestion] = useState<string>('');
   const [threadQuestions, setThreadQuestions] = useState<string[]>([]);
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
+  const { data: skillsData } = useSkillsQuery({
+    fetchPolicy: 'cache-and-network',
+  });
+  const availableSkills: SkillFragment[] = useMemo(
+    () => (skillsData?.skills || []).filter((s) => s.enabled),
+    [skillsData],
+  );
   // Handle errors via try/catch blocks rather than onError callback
   const [createAskingTask, createAskingTaskResult] =
     useCreateAskingTaskMutation();
@@ -300,7 +312,13 @@ export default function useAskPrompt(threadId?: number) {
     setOriginalQuestion(value);
     try {
       const response = await createAskingTask({
-        variables: { data: { question: value, threadId } },
+        variables: {
+          data: {
+            question: value,
+            threadId,
+            skillIds: selectedSkillIds.length ? selectedSkillIds : undefined,
+          },
+        },
       });
       await fetchAskingTask({
         variables: { taskId: response.data.createAskingTask.id },
@@ -336,10 +354,13 @@ export default function useAskPrompt(threadId?: number) {
     onStopStreaming,
     onStopRecommend,
     onStoreThreadQuestions,
+    availableSkills,
+    selectedSkillIds,
+    onChangeSelectedSkills: setSelectedSkillIds,
     inputProps: {
       placeholder: threadId
-        ? 'Ask follow-up questions to explore your data'
-        : 'Ask to explore your data',
+        ? 'Ask follow-up questions to explore your data (or type @skill-slug)'
+        : 'Ask to explore your data (skills auto-selected or pick below)',
     },
   };
 }

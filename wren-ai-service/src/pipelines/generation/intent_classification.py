@@ -58,6 +58,7 @@ You are an expert detective specializing in intent classification. Combine the u
 - "List the top 10 products by revenue."
 - "Используй продажи и сделай HTML дешборд" / "Build a sales dashboard" (always TEXT_TO_SQL: rephrase into a single focused analytical query aggregating 2-4 key metrics like revenue, order count, average order value grouped by month/date if a date column exists, or by main category; do NOT ask for HTML or multiple UNION ALL sections)
 - "Привет, как у меня дела будут на следующей неделе по продажам?" / "What will sales be next week/month?" / any forecasting question (always TEXT_TO_SQL: NEVER classify as GENERAL or MISLEADING_QUERY! Rephrase into a historical time-series query at the matching granularity — e.g., weekly or monthly revenue, order count, and average order value over recent periods ordered chronologically so a trend forecast can be computed)
+- "Проведи RFM-анализ клиентов" / "Проведи когортный анализ" / "Проведи ABC-анализ" / any request matching a USER INSTRUCTION or ACTIVE SKILL (always TEXT_TO_SQL: NEVER classify as GENERAL! Rephrase into a concrete analytical query over the available customer/order/product tables following the active skill methodology)
 </TEXT_TO_SQL>
 
 <GENERAL>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import FunctionOutlined from '@ant-design/icons/FunctionOutlined';
+import ThunderboltOutlined from '@ant-design/icons/ThunderboltOutlined';
 import { Path, MENU_KEY } from '@/utils/enum';
 import { InstructionsSVG } from '@/utils/svgs';
 import SidebarMenu from '@/components/sidebar/SidebarMenu';
@@ -20,6 +21,7 @@ const Layout = styled.div`
 const MENU_KEY_MAP = {
   [Path.KnowledgeQuestionSQLPairs]: MENU_KEY.QUESTION_SQL_PAIRS,
   [Path.KnowledgeInstructions]: MENU_KEY.INSTRUCTIONS,
+  [Path.KnowledgeSkills]: MENU_KEY.SKILLS,
 };
 
 const linkStyle = { color: 'inherit', transition: 'none' };
@@ -48,6 +50,17 @@ export default function Knowledge() {
       ),
       icon: <InstructionsSVG />,
       key: MENU_KEY.INSTRUCTIONS,
+      className: 'pl-4',
+    },
+    {
+      'data-guideid': 'skills',
+      label: (
+        <Link style={linkStyle} href={Path.KnowledgeSkills}>
+          Skills Library
+        </Link>
+      ),
+      icon: <ThunderboltOutlined />,
+      key: MENU_KEY.SKILLS,
       className: 'pl-4',
     },
   ];

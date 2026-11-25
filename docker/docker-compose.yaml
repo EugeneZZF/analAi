@@ -67,6 +67,7 @@ services:
     volumes:
       - ${PROJECT_DIR}/config.yaml:/app/config.yaml:ro
       - ${PROJECT_DIR}/data:/app/data:ro
+      - ../wren-ai-service/skills:/app/skills
     networks:
       - wren
     depends_on:
@@ -87,7 +88,6 @@ services:
     build: ../wren-ui
     image: wren-ui:local
     restart: on-failure
-    platform: ${PLATFORM}
     environment:
       DB_TYPE: sqlite
       # /app is the working directory in the container

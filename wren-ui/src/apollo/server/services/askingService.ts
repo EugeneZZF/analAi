@@ -62,6 +62,7 @@ export interface AskingPayload {
 
 export interface AskingTaskInput {
   question: string;
+  skillIds?: string[];
 }
 
 export interface AskingDetailTaskInput {
@@ -602,6 +603,7 @@ export class AskingService implements IAskingService {
       : null;
     const response = await this.askingTaskTracker.createAskingTask({
       query: input.question,
+      skillIds: input.skillIds,
       histories,
       deployId,
       configurations: { language },

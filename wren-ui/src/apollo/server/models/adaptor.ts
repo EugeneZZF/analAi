@@ -75,6 +75,7 @@ export interface AskInput {
   deployId: string;
   histories?: ThreadResponse[];
   configurations?: ProjectConfigurations;
+  skillIds?: string[];
 }
 
 export interface AsyncQueryResponse {
@@ -143,6 +144,7 @@ export type AskResult = AskResponse<
   retrievedTables?: string[];
   invalidSql?: string;
   traceId?: string;
+  appliedSkills?: string[];
 };
 
 export enum RecommendationQuestionStatus {
@@ -332,4 +334,52 @@ export interface AskFeedbackResult {
   }>;
   traceId?: string;
   invalidSql?: string;
+}
+
+export interface SkillDocument {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  category: string;
+  tags: string[];
+  triggers: string[];
+  questions: string[];
+  content: string;
+  rawMarkdown: string;
+  enabled: boolean;
+  isGlobal: boolean;
+  isShared: boolean;
+  isBuiltin: boolean;
+  projectId?: string | null;
+  author: string;
+  version: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaveSkillInput {
+  id?: string;
+  slug?: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  triggers?: string[];
+  questions?: string[];
+  content?: string;
+  rawMarkdown?: string;
+  enabled?: boolean;
+  isGlobal?: boolean;
+  isShared?: boolean;
+  projectId?: string;
+  author?: string;
+  version?: string;
+}
+
+export interface ImportSkillInput {
+  rawMarkdown: string;
+  projectId?: string;
+  isShared?: boolean;
+  overwrite?: boolean;
 }

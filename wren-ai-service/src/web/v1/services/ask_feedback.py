@@ -64,8 +64,10 @@ class AskFeedbackService:
         allow_sql_diagnosis: bool = True,
         maxsize: int = 1_000_000,
         ttl: int = 120,
+        skills_service=None,
     ):
         self._pipelines = pipelines
+        self._skills_service = skills_service
         self._ask_feedback_results: Dict[str, AskFeedbackResultResponse] = TTLCache(
             maxsize=maxsize, ttl=ttl
         )
@@ -165,6 +167,18 @@ class AskFeedbackService:
                 instructions = instructions_task["formatted_output"].get(
                     "documents", []
                 )
+                if self._skills_service is not None:
+                    matched_skills = self._skills_service.match_skills(
+                        query=ask_feedback_request.question,
+                        project_id=ask_feedback_request.project_id,
+                    )
+                    if matched_skills:
+                        instructions = (
+                            self._skills_service.format_skills_as_instructions(
+                                matched_skills
+                            )
+                            + instructions
+                        )
 
             if not self._is_stopped(query_id, self._ask_feedback_results):
                 self._ask_feedback_results[query_id] = AskFeedbackResultResponse(

@@ -7,6 +7,7 @@ import { LearningResolver } from './resolvers/learningResolver';
 import { DashboardResolver } from './resolvers/dashboardResolver';
 import { SqlPairResolver } from './resolvers/sqlPairResolver';
 import { InstructionResolver } from './resolvers/instructionResolver';
+import { SkillResolver } from './resolvers/skillResolver';
 import { ApiHistoryResolver } from './resolvers/apiHistoryResolver';
 import { convertColumnType } from '@server/utils';
 import { DialectSQLScalar } from './scalars';
@@ -19,6 +20,7 @@ const learningResolver = new LearningResolver();
 const dashboardResolver = new DashboardResolver();
 const sqlPairResolver = new SqlPairResolver();
 const instructionResolver = new InstructionResolver();
+const skillResolver = new SkillResolver();
 const apiHistoryResolver = new ApiHistoryResolver();
 const resolvers = {
   JSON: GraphQLJSON,
@@ -72,6 +74,9 @@ const resolvers = {
     sqlPairs: sqlPairResolver.getProjectSqlPairs,
     // Instructions
     instructions: instructionResolver.getInstructions,
+    // Skills Library
+    skills: skillResolver.getSkills,
+    skill: skillResolver.getSkill,
 
     // API History
     apiHistory: apiHistoryResolver.getApiHistory,
@@ -177,6 +182,11 @@ const resolvers = {
     createInstruction: instructionResolver.createInstruction,
     updateInstruction: instructionResolver.updateInstruction,
     deleteInstruction: instructionResolver.deleteInstruction,
+    // Skills Library
+    createSkill: skillResolver.createSkill,
+    updateSkill: skillResolver.updateSkill,
+    importSkill: skillResolver.importSkill,
+    deleteSkill: skillResolver.deleteSkill,
   },
   ThreadResponse: askingResolver.getThreadResponseNestedResolver(),
   DetailStep: askingResolver.getDetailStepNestedResolver(),

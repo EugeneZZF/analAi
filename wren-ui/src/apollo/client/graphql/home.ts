@@ -85,6 +85,7 @@ const COMMON_ASKING_TASK = gql`
     invalidSql
     traceId
     queryId
+    appliedSkills
   }
   ${COMMON_ERROR}
 `;

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from typing import Dict, List, Literal, Optional
 
 from cachetools import TTLCache
@@ -30,6 +31,7 @@ class AskRequest(BaseRequest):
     use_dry_plan: bool = False
     allow_dry_plan_fallback: bool = True
     custom_instruction: Optional[str] = None
+    skill_ids: Optional[List[str]] = None
 
 
 class AskResponse(BaseModel):
@@ -85,6 +87,7 @@ class _AskResultResponse(BaseModel):
     general_type: Optional[
         Literal["MISLEADING_QUERY", "DATA_ASSISTANCE", "USER_GUIDE"]
     ] = None
+    applied_skills: Optional[List[str]] = None
 
 
 class AskResultResponse(_AskResultResponse):
@@ -108,8 +111,10 @@ class AskService:
         max_histories: int = 5,
         maxsize: int = 1_000_000,
         ttl: int = 120,
+        skills_service=None,
     ):
         self._pipelines = pipelines
+        self._skills_service = skills_service
         self._ask_results: Dict[str, AskResultResponse] = TTLCache(
             maxsize=maxsize, ttl=ttl
         )
@@ -176,9 +181,28 @@ class AskService:
         use_dry_plan = ask_request.use_dry_plan
         allow_dry_plan_fallback = ask_request.allow_dry_plan_fallback
         sql_knowledge = None
+        applied_skills: List[str] = []
+        matched_skills = []
 
         try:
             user_query = ask_request.query
+            if re.search(r"[а-яА-ЯёЁ]", user_query):
+                ask_request.configurations.language = "Russian"
+
+            if self._skills_service is not None:
+                matched_skills = self._skills_service.match_skills(
+                    query=user_query,
+                    project_id=ask_request.project_id,
+                    explicit_skill_ids=ask_request.skill_ids,
+                )
+                applied_skills = [s.name for s in matched_skills]
+                skill_prompt_block = self._skills_service.format_skills_prompt_block(
+                    matched_skills
+                )
+                if skill_prompt_block:
+                    ask_request.custom_instruction = "\n\n".join(
+                        filter(None, [ask_request.custom_instruction, skill_prompt_block])
+                    )
 
             # ask status can be understanding, searching, generating, finished, failed, stopped
             # we will need to handle business logic for each status
@@ -187,6 +211,7 @@ class AskService:
                     status="understanding",
                     trace_id=trace_id,
                     is_followup=True if histories else False,
+                    applied_skills=applied_skills,
                 )
 
                 historical_question = await self._pipelines["historical_question"].run(
@@ -199,7 +224,7 @@ class AskService:
                     "formatted_output", {}
                 ).get("documents", [])[:1]
 
-                if historical_question_result:
+                if historical_question_result and not ask_request.skill_ids:
                     api_results = [
                         AskResult(
                             **{
@@ -232,6 +257,13 @@ class AskService:
                     instructions = instructions_task["formatted_output"].get(
                         "documents", []
                     )
+                    if self._skills_service is not None and matched_skills:
+                        skill_instructions = (
+                            self._skills_service.format_skills_as_instructions(
+                                matched_skills
+                            )
+                        )
+                        instructions = skill_instructions + instructions
 
                     if self._allow_intent_classification:
                         intent_classification_result = (
@@ -249,6 +281,14 @@ class AskService:
                             "rephrased_question"
                         )
                         intent_reasoning = intent_classification_result.get("reasoning")
+
+                        # If an analytical skill is matched or the user asks an analytical query,
+                        # force TEXT_TO_SQL so the agent executes SQL and saves the thread in the UI
+                        if matched_skills and intent in ("GENERAL", "MISLEADING_QUERY"):
+                            logger.info(
+                                f"Forcing intent from {intent} to TEXT_TO_SQL because skills {applied_skills} matched"
+                            )
+                            intent = "TEXT_TO_SQL"
 
                         if rephrased_question:
                             user_query = rephrased_question
@@ -332,6 +372,7 @@ class AskService:
                                 intent_reasoning=intent_reasoning,
                                 trace_id=trace_id,
                                 is_followup=True if histories else False,
+                                applied_skills=applied_skills,
                             )
             if not self._is_stopped(query_id, self._ask_results) and not api_results:
                 self._ask_results[query_id] = AskResultResponse(
@@ -341,6 +382,7 @@ class AskService:
                     intent_reasoning=intent_reasoning,
                     trace_id=trace_id,
                     is_followup=True if histories else False,
+                    applied_skills=applied_skills,
                 )
 
                 retrieval_result = await self._pipelines["db_schema_retrieval"].run(
@@ -423,6 +465,7 @@ class AskService:
                     sql_generation_reasoning=sql_generation_reasoning,
                     trace_id=trace_id,
                     is_followup=True if histories else False,
+                    applied_skills=applied_skills,
                 )
 
             if not self._is_stopped(query_id, self._ask_results) and not api_results:
@@ -435,6 +478,7 @@ class AskService:
                     sql_generation_reasoning=sql_generation_reasoning,
                     trace_id=trace_id,
                     is_followup=True if histories else False,
+                    applied_skills=applied_skills,
                 )
 
                 if allow_sql_functions_retrieval:
@@ -592,6 +636,7 @@ class AskService:
                         sql_generation_reasoning=sql_generation_reasoning,
                         trace_id=trace_id,
                         is_followup=True if histories else False,
+                        applied_skills=applied_skills,
                     )
                 results["ask_result"] = api_results
                 results["metadata"]["type"] = "TEXT_TO_SQL"
