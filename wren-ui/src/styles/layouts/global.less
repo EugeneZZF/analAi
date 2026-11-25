@@ -1,0 +1,44 @@
+:root {
+  .make-color-variables();
+  --disabled: @disabled-color;
+  --bg-base: @bg-base;
+  --bg-card: @bg-card;
+  --accent-orange: @accent-orange;
+  --positive-green: @positive-green;
+  --negative-red: @negative-red;
+}
+
+html,
+body {
+  min-width: 360px;
+  background-color: @bg-base;
+  color: @text-color;
+}
+
+.ant-layout {
+  background-color: @bg-base;
+}
+
+.ant-card {
+  background-color: @bg-card;
+  border-color: @border-color-base;
+}
+
+.ant-btn-primary {
+  font-weight: 600;
+  color: @bg-base;
+
+  &:hover,
+  &:focus {
+    color: @bg-base;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html body {
+    background-color: @bg-base;
+  }
+  h1.next-error-h1 {
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+  }
+}
