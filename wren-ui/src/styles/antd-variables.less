@@ -1,0 +1,152 @@
+// Using in appendData, only for variables defination
+@import '~antd/lib/style/themes/dark.less';
+
+@prefix: adm;
+
+// -------- Theme Palette
+@bg-base: #080909;
+@bg-card: #141414;
+@accent-orange: #FF8500;
+@positive-green: #22C55E;
+@negative-red: #EF4444;
+
+// -------- Colors
+// >> Accent (Citrus / Orange)
+@citrus-base: @accent-orange;
+@citrus-1: rgba(255, 133, 0, 0.12);
+@citrus-2: rgba(255, 133, 0, 0.2);
+@citrus-3: rgba(255, 133, 0, 0.35);
+@citrus-4: rgba(255, 133, 0, 0.55);
+@citrus-5: #ffa033;
+@citrus-6: @accent-orange;
+@citrus-7: #e07400;
+@citrus-8: #b85e00;
+@citrus-9: #8f4800;
+@citrus-10: #663300;
+
+// >> Primary Accent mapped onto geekblue tokens used across components
+@geekblue-1: rgba(255, 133, 0, 0.12);
+@geekblue-2: rgba(255, 133, 0, 0.2);
+@geekblue-3: rgba(255, 133, 0, 0.35);
+@geekblue-4: rgba(255, 133, 0, 0.55);
+@geekblue-5: #ffa033;
+@geekblue-6: @accent-orange;
+@geekblue-7: #e07400;
+@geekblue-8: #b85e00;
+@geekblue-9: #8f4800;
+@geekblue-10: #663300;
+
+// >> Positive / Negative
+@green-1: rgba(34, 197, 94, 0.12);
+@green-2: rgba(34, 197, 94, 0.2);
+@green-3: rgba(34, 197, 94, 0.35);
+@green-4: rgba(34, 197, 94, 0.55);
+@green-5: #4ade80;
+@green-6: @positive-green;
+@green-7: #16a34a;
+@green-8: #15803d;
+
+@red-1: rgba(239, 68, 68, 0.12);
+@red-2: rgba(239, 68, 68, 0.2);
+@red-3: rgba(239, 68, 68, 0.35);
+@red-4: rgba(239, 68, 68, 0.55);
+@red-5: @negative-red;
+@red-6: @negative-red;
+@red-7: #dc2626;
+@red-8: #b91c1c;
+
+// >> Neutral (Dark Mode Scale)
+@gray-1: @bg-card;
+@gray-2: #101111;
+@gray-3: #1a1a1a;
+@gray-4: #222222;
+@gray-5: #2a2a2a;
+@gray-6: #737373;
+@gray-7: #a3a3a3;
+@gray-8: #e5e5e5;
+@gray-9: #f5f5f5;
+@gray-10: #ffffff;
+@gray-11: #1f1f1f;
+@gray-12: #141414;
+@gray-13: @bg-base;
+
+@preset-colors: pink, magenta, red, volcano, orange, yellow, gold, cyan, lime,
+  green, blue, geekblue, purple, citrus, gray;
+
+@black: @bg-base;
+@white: #ffffff;
+
+@primary-color: @accent-orange;
+@link-color: @accent-orange;
+@processing-color: @accent-orange;
+
+@text-color: #f5f5f5;
+@text-color-secondary: #8c8c8c;
+@heading-color: #ffffff;
+@success-color: @positive-green;
+@warning-color: @accent-orange;
+@error-color: @negative-red;
+@disabled-color: rgba(255, 255, 255, 0.25);
+
+// Functions
+.make-color-variables(@i: length(@preset-colors)) when (@i > 0) {
+  .make-color-variables(@i - 1);
+  @color: extract(@preset-colors, @i);
+  each(range(1, 10, 1), {
+    @colorVar: '@{color}-@{index}';
+    --@{color}-@{index}: @@colorVar;
+  });
+}
+
+// Header
+@layout-header-height: 20px;
+
+// Components
+@body-background: @bg-base;
+@component-background: @bg-card;
+@layout-body-background: @bg-base;
+@layout-header-background: @bg-base;
+@layout-sider-background: @bg-card;
+
+@card-background: @bg-card;
+@popover-background: @bg-card;
+@modal-content-bg: @bg-card;
+@modal-header-bg: @bg-card;
+@modal-footer-bg: @bg-card;
+@drawer-bg: @bg-card;
+@table-bg: @bg-card;
+@table-header-bg: #1a1a1a;
+@table-row-hover-bg: #1f1f1f;
+@table-expanded-row-bg: #181818;
+@input-bg: @bg-card;
+@select-background: @bg-card;
+@select-dropdown-bg: @bg-card;
+@select-item-selected-bg: rgba(255, 133, 0, 0.16);
+@menu-bg: transparent;
+@menu-dark-bg: @bg-card;
+@menu-item-active-bg: rgba(255, 133, 0, 0.14);
+
+@border-color-base: #262626;
+@border-color-split: #222222;
+
+@btn-primary-color: @bg-base;
+@btn-primary-bg: @accent-orange;
+@btn-default-bg: @bg-card;
+@btn-default-color: #f5f5f5;
+@btn-default-border: #2a2a2a;
+
+@breadcrumb-last-item-color: @text-color;
+@table-padding-vertical: 12px;
+@table-header-cell-split-color: transparent;
+@border-radius-base: 8px;
+
+// Typography
+@typography-title-font-weight: 700;
+@heading-1-size: ceil(@font-size-base * 2.85);
+
+// Avatar
+@avatar-size-xs: 16px;
+@avatar-font-size-xs: 12px;
+
+@tooltip-bg: #1f1f1f;
+@tooltip-color: #f5f5f5;
