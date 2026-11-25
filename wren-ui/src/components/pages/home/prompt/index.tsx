@@ -5,14 +5,19 @@ import {
   forwardRef,
   useImperativeHandle,
 } from 'react';
+import Link from 'next/link';
 import styled from 'styled-components';
-import { PROCESS_STATE } from '@/utils/enum';
+import { Select, Tag, Tooltip } from 'antd';
+import ThunderboltOutlined from '@ant-design/icons/ThunderboltOutlined';
+import SettingOutlined from '@ant-design/icons/SettingOutlined';
+import { Path, PROCESS_STATE } from '@/utils/enum';
 import PromptInput from '@/components/pages/home/prompt/Input';
 import PromptResult from '@/components/pages/home/prompt/Result';
 import useAskProcessState, {
   getIsProcessing,
 } from '@/hooks/useAskProcessState';
 import { AskPromptData } from '@/hooks/useAskPrompt';
+import { SkillFragment } from '@/apollo/client/graphql/skills.generated';
 import {
   CreateThreadInput,
   CreateThreadResponseInput,
@@ -29,6 +34,9 @@ interface Props {
   onStopRecommend: () => void;
   data: AskPromptData;
   loading: boolean;
+  availableSkills?: SkillFragment[];
+  selectedSkillIds?: string[];
+  onChangeSelectedSkills?: (ids: string[]) => void;
   inputProps: {
     placeholder: string;
   };
@@ -60,6 +68,9 @@ export default forwardRef<Attributes, Props>(function Prompt(props, ref) {
     onCreateResponse,
     onStopStreaming,
     onStopRecommend,
+    availableSkills = [],
+    selectedSkillIds = [],
+    onChangeSelectedSkills,
     inputProps,
   } = props;
   const askProcessState = useAskProcessState();
@@ -155,13 +166,65 @@ export default forwardRef<Attributes, Props>(function Prompt(props, ref) {
   );
 
   return (
-    <PromptStyle className="d-flex align-end bg-gray-2 p-3 border border-gray-3 rounded">
-      <PromptInput
-        question={question}
-        isProcessing={isProcessing}
-        onAsk={submitAsk}
-        inputProps={inputProps}
-      />
+    <PromptStyle className="bg-gray-2 p-3 border border-gray-3 rounded">
+      <div className="d-flex align-center justify-space-between mb-2">
+        <div className="d-flex align-center flex-grow-1 mr-2" style={{ gap: 6 }}>
+          <Tooltip title="Агент автоматически подбирает скиллы по контексту вопроса. Вы также можете явно выбрать скиллы здесь:">
+            <span className="text-xs gray-7 d-flex align-center" style={{ whiteSpace: 'nowrap' }}>
+              <ThunderboltOutlined className="geekblue-6 mr-1" />
+              Skills:
+            </span>
+          </Tooltip>
+          <Select
+            mode="multiple"
+            size="small"
+            allowClear
+            maxTagCount="responsive"
+            style={{ flex: 1, minWidth: 200 }}
+            placeholder="Автоподбор по контексту (или выберите скиллы вручную)..."
+            value={selectedSkillIds}
+            onChange={(vals) => onChangeSelectedSkills?.(vals)}
+            disabled={isProcessing}
+            optionLabelProp="label"
+          >
+            {availableSkills.map((skill) => (
+              <Select.Option
+                key={skill.slug}
+                value={skill.slug}
+                label={skill.name}
+              >
+                <div className="d-flex align-center justify-space-between">
+                  <span>{skill.name}</span>
+                  <span>
+                    {skill.isGlobal && (
+                      <Tag color="green" className="text-xs mr-0">
+                        Global
+                      </Tag>
+                    )}
+                    <Tag className="text-xs ml-1 mr-0">@{skill.slug}</Tag>
+                  </span>
+                </div>
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+        <Link
+          href={Path.KnowledgeSkills}
+          className="text-xs geekblue-6 d-flex align-center"
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          <SettingOutlined className="mr-1" />
+          Библиотека скиллов ({availableSkills.length})
+        </Link>
+      </div>
+      <div className="d-flex align-end">
+        <PromptInput
+          question={question}
+          isProcessing={isProcessing}
+          onAsk={submitAsk}
+          inputProps={inputProps}
+        />
+      </div>
 
       {showResult && (
         <PromptResult

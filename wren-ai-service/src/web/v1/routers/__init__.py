@@ -11,6 +11,7 @@ from src.web.v1.routers import (
     relationship_recommendation,
     semantics_description,
     semantics_preparation,
+    skills,
     sql_answers,
     sql_corrections,
     sql_pairs,
@@ -24,6 +25,7 @@ router.include_router(question_recommendation.router)
 router.include_router(relationship_recommendation.router)
 router.include_router(semantics_description.router)
 router.include_router(semantics_preparation.router)
+router.include_router(skills.router)
 router.include_router(sql_answers.router)
 router.include_router(chart.router)
 router.include_router(chart_adjustment.router)

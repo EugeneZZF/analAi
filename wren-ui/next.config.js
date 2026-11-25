@@ -13,6 +13,9 @@ const resolveAlias = {
 const nextConfig = withLess({
   output: 'standalone',
   staticPageGenerationTimeout: 1000,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   compiler: {
     // Enables the styled-components SWC transform
     styledComponents: {

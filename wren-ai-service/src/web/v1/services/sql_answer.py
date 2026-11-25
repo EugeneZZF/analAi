@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from typing import Dict, Literal, Optional
 
 from cachetools import TTLCache
@@ -47,8 +48,10 @@ class SqlAnswerService:
         pipelines: Dict[str, BasicPipeline],
         maxsize: int = 1_000_000,
         ttl: int = 120,
+        skills_service=None,
     ):
         self._pipelines = pipelines
+        self._skills_service = skills_service
         self._sql_answer_results: Dict[str, SqlAnswerResultResponse] = TTLCache(
             maxsize=maxsize, ttl=ttl
         )
@@ -93,6 +96,23 @@ class SqlAnswerService:
                 trace_id=trace_id,
             )
 
+            custom_instruction = sql_answer_request.custom_instruction
+            if self._skills_service is not None:
+                matched_skills = self._skills_service.match_skills(
+                    query=sql_answer_request.query,
+                    project_id=sql_answer_request.project_id,
+                )
+                skill_block = self._skills_service.format_skills_prompt_block(
+                    matched_skills
+                )
+                if skill_block:
+                    custom_instruction = "\n\n".join(
+                        filter(None, [custom_instruction, skill_block])
+                    )
+
+            if re.search(r"[а-яА-ЯёЁ]", sql_answer_request.query):
+                sql_answer_request.configurations.language = "Russian"
+
             asyncio.create_task(
                 self._pipelines["sql_answer"].run(
                     query=sql_answer_request.query,
@@ -101,7 +121,7 @@ class SqlAnswerService:
                     language=sql_answer_request.configurations.language,
                     current_time=sql_answer_request.configurations.show_current_time(),
                     query_id=query_id,
-                    custom_instruction=sql_answer_request.custom_instruction,
+                    custom_instruction=custom_instruction,
                 )
             )
 

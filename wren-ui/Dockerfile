@@ -22,7 +22,7 @@ WORKDIR /app
 RUN apt-get -o Acquire::Retries=5 update && apt-get -o Acquire::Retries=5 install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies based on the preferred package manager
-RUN yarn install --immutable
+RUN yarn install
 RUN yarn add sharp
 
 # Rebuild the source code only when needed

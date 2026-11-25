@@ -1,4 +1,5 @@
 import logging
+import os
 from dataclasses import dataclass
 
 from src.core.engine import Engine
@@ -87,11 +88,26 @@ def llm_processor(entry: dict) -> dict:
         return result
 
     others = {k: v for k, v in entry.items() if k not in ["type", "provider", "models"]}
+    env_ollama_base = os.getenv("OLLAMA_API_BASE") or os.getenv("LLM_API_BASE")
+    env_ollama_model = os.getenv("OLLAMA_MODEL") or os.getenv("LLM_MODEL")
+    models_list = []
+    for raw_m in entry.get("models", []):
+        m = dict(raw_m)
+        if env_ollama_base and m.get("alias") == "default":
+            m["api_base"] = env_ollama_base
+        if env_ollama_model and m.get("alias") == "default":
+            m["model"] = (
+                env_ollama_model
+                if "/" in env_ollama_model
+                else f"ollama_chat/{env_ollama_model}"
+            )
+        models_list.append(m)
+
     returned = {}
-    all_models = {m["model"]: m for m in entry.get("models", [])}
+    all_models = {m["model"]: m for m in models_list}
     fallback_model_params = build_fallback_params(all_models)
 
-    for model in entry.get("models", []):
+    for model in models_list:
         model_name = f"{entry.get('provider')}.{model.get('alias', model.get('model'))}"
         model_additional_params = {
             k: v

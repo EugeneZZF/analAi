@@ -22,12 +22,12 @@ from src.utils import extract_braces_content, remove_trailing_slash
 def _normalize_deepseek_kwargs(
     model: str, generation_kwargs: Dict[str, Any]
 ) -> Dict[str, Any]:
-    """Adapt OpenAI-style generation kwargs for DeepSeek API compatibility."""
-    if not model.startswith("deepseek/"):
+    """Adapt OpenAI-style generation kwargs for DeepSeek and Ollama API compatibility."""
+    if not model.startswith(("deepseek/", "ollama/")):
         return generation_kwargs
 
     normalized = dict(generation_kwargs)
-    is_reasoner = "reasoner" in model
+    is_reasoner = "reasoner" in model or "deepseek-r1" in model
 
     response_format = normalized.get("response_format")
     if isinstance(response_format, dict) and response_format.get("type") == "json_schema":

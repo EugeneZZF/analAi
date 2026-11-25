@@ -1,9 +1,11 @@
 import { Typography, Tag } from 'antd';
+import ThunderboltOutlined from '@ant-design/icons/ThunderboltOutlined';
 import { makeIterable } from '@/utils/iteration';
 import { Spinner } from '@/components/PageLoading';
 
 interface Props {
   tables: string[];
+  appliedSkills?: string[];
   loading?: boolean;
   isAdjustment?: boolean;
 }
@@ -15,7 +17,7 @@ const TagTemplate = ({ name }: { name: string }) => {
 const TagIterator = makeIterable(TagTemplate);
 
 export default function Retrieving(props: Props) {
-  const { tables, loading, isAdjustment } = props;
+  const { tables, appliedSkills = [], loading, isAdjustment } = props;
 
   const data = tables.map((table) => ({ name: table }));
 
@@ -42,6 +44,19 @@ export default function Retrieving(props: Props) {
           <>
             <div className="mb-1">{modelDescription}</div>
             <TagIterator data={data} />
+            {appliedSkills.length > 0 && (
+              <div className="mt-2">
+                <div className="mb-1">
+                  Active skills applied ({appliedSkills.length}):
+                </div>
+                {appliedSkills.map((skillName) => (
+                  <Tag key={skillName} color="geekblue" className="mb-1">
+                    <ThunderboltOutlined className="mr-1" />
+                    {skillName}
+                  </Tag>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>

@@ -84,6 +84,7 @@ from .question_recommendation import QuestionRecommendation  # noqa: E402
 from .relationship_recommendation import RelationshipRecommendation  # noqa: E402
 from .semantics_description import SemanticsDescription  # noqa: E402
 from .semantics_preparation import SemanticsPreparationService  # noqa: E402
+from .skills import SkillsService  # noqa: E402
 from .sql_answer import SqlAnswerService  # noqa: E402
 from .sql_corrections import SqlCorrectionService  # noqa: E402
 from .sql_pairs import SqlPairsService  # noqa: E402
@@ -98,6 +99,7 @@ __all__ = [
     "RelationshipRecommendation",
     "SemanticsDescription",
     "SemanticsPreparationService",
+    "SkillsService",
     "SqlAnswerService",
     "SqlCorrectionService",
     "SqlPairsService",

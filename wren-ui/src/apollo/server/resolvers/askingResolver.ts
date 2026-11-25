@@ -63,6 +63,7 @@ export interface AskingTask {
   invalidSql?: string;
   traceId?: string;
   queryId?: string;
+  appliedSkills?: string[];
 }
 
 // DetailedThread is a type that represents a detailed thread, which is a thread with responses.
@@ -173,14 +174,16 @@ export class AskingResolver {
 
   public async createAskingTask(
     _root: any,
-    args: { data: { question: string; threadId?: number } },
+    args: {
+      data: { question: string; threadId?: number; skillIds?: string[] };
+    },
     ctx: IContext,
   ): Promise<Task> {
-    const { question, threadId } = args.data;
+    const { question, threadId, skillIds } = args.data;
     const project = await ctx.projectService.getCurrentProject();
 
     const askingService = ctx.askingService;
-    const data = { question };
+    const data = { question, skillIds };
     const task = await askingService.createAskingTask(data, {
       threadId,
       language: WrenAILanguage[project.language] || WrenAILanguage.EN,
@@ -820,6 +823,7 @@ export class AskingResolver {
         ? safeFormatSQL(askingTask.invalidSql)
         : null,
       traceId: askingTask.traceId,
+      appliedSkills: askingTask.appliedSkills || [],
     };
   }
 }

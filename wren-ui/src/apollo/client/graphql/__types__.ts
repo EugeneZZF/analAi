@@ -97,6 +97,7 @@ export enum ApiType {
 
 export type AskingTask = {
   __typename?: 'AskingTask';
+  appliedSkills?: Maybe<Array<Scalars['String']>>;
   candidates: Array<ResultCandidate>;
   error?: Maybe<Error>;
   intentReasoning?: Maybe<Scalars['String']>;
@@ -112,7 +113,75 @@ export type AskingTask = {
 
 export type AskingTaskInput = {
   question: Scalars['String'];
+  skillIds?: InputMaybe<Array<Scalars['String']>>;
   threadId?: InputMaybe<Scalars['Int']>;
+};
+
+export type Skill = {
+  __typename?: 'Skill';
+  id: Scalars['String'];
+  slug: Scalars['String'];
+  name: Scalars['String'];
+  description: Scalars['String'];
+  category: Scalars['String'];
+  tags: Array<Scalars['String']>;
+  triggers: Array<Scalars['String']>;
+  questions: Array<Scalars['String']>;
+  content: Scalars['String'];
+  rawMarkdown: Scalars['String'];
+  enabled: Scalars['Boolean'];
+  isGlobal: Scalars['Boolean'];
+  isShared: Scalars['Boolean'];
+  isBuiltin: Scalars['Boolean'];
+  projectId?: Maybe<Scalars['String']>;
+  author: Scalars['String'];
+  version: Scalars['String'];
+  createdAt: Scalars['String'];
+  updatedAt: Scalars['String'];
+};
+
+export type CreateSkillInput = {
+  slug?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  description?: InputMaybe<Scalars['String']>;
+  category?: InputMaybe<Scalars['String']>;
+  tags?: InputMaybe<Array<Scalars['String']>>;
+  triggers?: InputMaybe<Array<Scalars['String']>>;
+  questions?: InputMaybe<Array<Scalars['String']>>;
+  content?: InputMaybe<Scalars['String']>;
+  rawMarkdown?: InputMaybe<Scalars['String']>;
+  enabled?: InputMaybe<Scalars['Boolean']>;
+  isGlobal?: InputMaybe<Scalars['Boolean']>;
+  isShared?: InputMaybe<Scalars['Boolean']>;
+  author?: InputMaybe<Scalars['String']>;
+  version?: InputMaybe<Scalars['String']>;
+};
+
+export type UpdateSkillInput = {
+  slug?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  description?: InputMaybe<Scalars['String']>;
+  category?: InputMaybe<Scalars['String']>;
+  tags?: InputMaybe<Array<Scalars['String']>>;
+  triggers?: InputMaybe<Array<Scalars['String']>>;
+  questions?: InputMaybe<Array<Scalars['String']>>;
+  content?: InputMaybe<Scalars['String']>;
+  rawMarkdown?: InputMaybe<Scalars['String']>;
+  enabled?: InputMaybe<Scalars['Boolean']>;
+  isGlobal?: InputMaybe<Scalars['Boolean']>;
+  isShared?: InputMaybe<Scalars['Boolean']>;
+  author?: InputMaybe<Scalars['String']>;
+  version?: InputMaybe<Scalars['String']>;
+};
+
+export type ImportSkillInput = {
+  rawMarkdown: Scalars['String'];
+  isShared?: InputMaybe<Scalars['Boolean']>;
+  overwrite?: InputMaybe<Scalars['Boolean']>;
+};
+
+export type SkillWhereInput = {
+  id: Scalars['String'];
 };
 
 export enum AskingTaskStatus {

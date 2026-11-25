@@ -33,6 +33,9 @@ import {
   AskFeedbackInput,
   AskFeedbackResult,
   AskFeedbackStatus,
+  SkillDocument,
+  SaveSkillInput,
+  ImportSkillInput,
 } from '@server/models/adaptor';
 import { getLogger } from '@server/utils';
 import * as Errors from '@server/utils/error';
@@ -129,6 +132,15 @@ export interface IWrenAIAdaptor {
   createAskFeedback(input: AskFeedbackInput): Promise<AsyncQueryResponse>;
   getAskFeedbackResult(queryId: string): Promise<AskFeedbackResult>;
   cancelAskFeedback(queryId: string): Promise<void>;
+
+  /**
+   * Skills library APIs
+   */
+  listSkills(projectId?: number): Promise<SkillDocument[]>;
+  getSkill(id: string): Promise<SkillDocument>;
+  saveSkill(input: SaveSkillInput): Promise<SkillDocument>;
+  importSkill(input: ImportSkillInput): Promise<SkillDocument>;
+  deleteSkill(id: string): Promise<boolean>;
 }
 
 export class WrenAIAdaptor implements IWrenAIAdaptor {
@@ -239,6 +251,7 @@ export class WrenAIAdaptor implements IWrenAIAdaptor {
         id: input.deployId,
         histories: this.transformHistoryInput(input.histories),
         configurations: input.configurations,
+        skill_ids: input.skillIds,
       });
       return { queryId: res.data.query_id };
     } catch (err: any) {
@@ -714,6 +727,115 @@ export class WrenAIAdaptor implements IWrenAIAdaptor {
     }
   }
 
+  public async listSkills(projectId?: number): Promise<SkillDocument[]> {
+    try {
+      const res = await axios.get(`${this.wrenAIBaseEndpoint}/v1/skills`, {
+        params: projectId ? { project_id: projectId.toString() } : undefined,
+      });
+      return (res.data?.skills || []).map((s: any) => this.transformSkill(s));
+    } catch (err: any) {
+      logger.debug(`Got error when listing skills: ${getAIServiceError(err)}`);
+      return [];
+    }
+  }
+
+  public async getSkill(id: string): Promise<SkillDocument> {
+    try {
+      const res = await axios.get(
+        `${this.wrenAIBaseEndpoint}/v1/skills/${encodeURIComponent(id)}`,
+      );
+      return this.transformSkill(res.data);
+    } catch (err: any) {
+      logger.debug(`Got error when getting skill: ${getAIServiceError(err)}`);
+      throw err;
+    }
+  }
+
+  public async saveSkill(input: SaveSkillInput): Promise<SkillDocument> {
+    try {
+      const body = {
+        id: input.id,
+        slug: input.slug,
+        name: input.name,
+        description: input.description,
+        category: input.category,
+        tags: input.tags,
+        triggers: input.triggers,
+        questions: input.questions,
+        content: input.content,
+        raw_markdown: input.rawMarkdown,
+        enabled: input.enabled,
+        is_global: input.isGlobal,
+        is_shared: input.isShared,
+        project_id: input.projectId,
+        author: input.author,
+        version: input.version,
+      };
+      const res = await axios.post(
+        `${this.wrenAIBaseEndpoint}/v1/skills`,
+        body,
+      );
+      return this.transformSkill(res.data);
+    } catch (err: any) {
+      logger.debug(`Got error when saving skill: ${getAIServiceError(err)}`);
+      throw err;
+    }
+  }
+
+  public async importSkill(input: ImportSkillInput): Promise<SkillDocument> {
+    try {
+      const res = await axios.post(
+        `${this.wrenAIBaseEndpoint}/v1/skills/import`,
+        {
+          raw_markdown: input.rawMarkdown,
+          project_id: input.projectId,
+          is_shared: input.isShared ?? true,
+          overwrite: input.overwrite ?? true,
+        },
+      );
+      return this.transformSkill(res.data);
+    } catch (err: any) {
+      logger.debug(`Got error when importing skill: ${getAIServiceError(err)}`);
+      throw err;
+    }
+  }
+
+  public async deleteSkill(id: string): Promise<boolean> {
+    try {
+      await axios.delete(
+        `${this.wrenAIBaseEndpoint}/v1/skills/${encodeURIComponent(id)}`,
+      );
+      return true;
+    } catch (err: any) {
+      logger.debug(`Got error when deleting skill: ${getAIServiceError(err)}`);
+      throw err;
+    }
+  }
+
+  private transformSkill(raw: any): SkillDocument {
+    return {
+      id: raw.id || raw.slug,
+      slug: raw.slug || raw.id,
+      name: raw.name || '',
+      description: raw.description || '',
+      category: raw.category || 'General',
+      tags: raw.tags || [],
+      triggers: raw.triggers || [],
+      questions: raw.questions || [],
+      content: raw.content || '',
+      rawMarkdown: raw.raw_markdown ?? raw.rawMarkdown ?? '',
+      enabled: raw.enabled ?? true,
+      isGlobal: raw.is_global ?? raw.isGlobal ?? false,
+      isShared: raw.is_shared ?? raw.isShared ?? true,
+      isBuiltin: raw.is_builtin ?? raw.isBuiltin ?? false,
+      projectId: raw.project_id ?? raw.projectId ?? null,
+      author: raw.author || 'User',
+      version: raw.version || '1.0',
+      createdAt: raw.created_at || raw.createdAt || new Date().toISOString(),
+      updatedAt: raw.updated_at || raw.updatedAt || new Date().toISOString(),
+    };
+  }
+
   private transformAskFeedbackResult(body: any): AskFeedbackResult {
     const { status, error } = this.transformStatusAndError(body);
     return {
@@ -833,6 +955,7 @@ export class WrenAIAdaptor implements IWrenAIAdaptor {
       retrievedTables: body?.retrieved_tables,
       invalidSql: body?.invalid_sql,
       traceId: body?.trace_id,
+      appliedSkills: body?.applied_skills || [],
     };
   }
 

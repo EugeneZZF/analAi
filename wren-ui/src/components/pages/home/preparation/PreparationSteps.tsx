@@ -70,6 +70,7 @@ export default function PreparationSteps(
 
   // data
   const retrievedTables = preparedTask?.retrievedTables || [];
+  const appliedSkills = preparedTask?.appliedSkills || [];
   const sqlGenerationReasoning =
     preparedTask?.sqlGenerationReasoning || askingStreamTask || '';
 
@@ -93,6 +94,7 @@ export default function PreparationSteps(
           <Retrieving
             loading={retrieving}
             tables={retrievedTables}
+            appliedSkills={appliedSkills}
             isAdjustment={preparedTask.isAdjustment}
           />
         </Timeline.Item>

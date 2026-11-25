@@ -11,8 +11,50 @@ from fastapi import APIRouter
 from litellm import acompletion
 from pydantic import BaseModel
 
+from src.config import settings
+from src.web.v1.services.skills import SkillsService
+
 logger = logging.getLogger("wren-ai-service")
 router = APIRouter()
+_dashboard_skills_service = SkillsService()
+
+
+def _resolve_dashboard_llm_config() -> Dict[str, Any]:
+    """Resolve LLM model, api_base, and api_key for HTML dashboard generation."""
+    ollama_base = (os.getenv("OLLAMA_API_BASE") or "").strip()
+    ollama_model = (os.getenv("OLLAMA_MODEL") or "").strip()
+    if ollama_base and ollama_model:
+        return {
+            "model": ollama_model,
+            "api_base": ollama_base,
+            "api_key": None,
+            "use_json_format": False,
+        }
+
+    for component in getattr(settings, "components", []) or []:
+        llm_cfg = getattr(component, "llm", None)
+        if llm_cfg and getattr(llm_cfg, "model", None):
+            model = llm_cfg.model
+            kwargs = getattr(llm_cfg, "kwargs", None) or {}
+            api_base = kwargs.get("api_base") or getattr(llm_cfg, "api_base", None)
+            api_key_env = getattr(llm_cfg, "api_key", None)
+            api_key = os.getenv(api_key_env) if isinstance(api_key_env, str) and api_key_env in os.environ else api_key_env
+            if not api_key:
+                api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("LLM_OPENAI_API_KEY")
+            is_ollama = model.startswith("ollama")
+            return {
+                "model": model,
+                "api_base": api_base,
+                "api_key": None if is_ollama else api_key,
+                "use_json_format": not is_ollama,
+            }
+
+    return {
+        "model": "deepseek/deepseek-chat",
+        "api_base": "https://api.deepseek.com/v1",
+        "api_key": os.getenv("DEEPSEEK_API_KEY") or os.getenv("LLM_OPENAI_API_KEY"),
+        "use_json_format": True,
+    }
 
 SPEC_SYSTEM_PROMPT = """You are a senior BI Data Visualization architect.
 Given a user's original question, the executed SQL, column metadata, and sample rows, design an insightful dashboard specification in JSON that STRICTLY answers the user's question.
@@ -992,28 +1034,45 @@ async def generate_html_dashboard(req: HtmlDashboardRequest) -> Dict[str, Any]:
         return {"ok": False, "error": "Dataset is empty"}
 
     sample_rows = req.rows[:25]
+    skills_section = ""
+    try:
+        matched_skills = _dashboard_skills_service.match_skills(query=req.question)
+        if matched_skills:
+            skills_text = "\n\n".join(
+                f"### Skill: {s.name}\n{s.content}" for s in matched_skills
+            )
+            skills_section = f"\n\nActive Analytical Skills:\n{skills_text}"
+    except Exception as exc:
+        logger.warning("Failed to match skills for HTML dashboard: %s", exc)
+
     user_prompt = (
         f"User Question: {req.question}\n\n"
         f"SQL:\n{req.sql}\n\n"
         f"Columns: {json.dumps(req.columns, ensure_ascii=False)}\n\n"
         f"Total Rows: {len(req.rows)}\n"
         f"Sample Rows:\n{json.dumps(sample_rows, ensure_ascii=False, default=str)}"
+        f"{skills_section}"
     )
 
-    api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("LLM_OPENAI_API_KEY")
-    resp = await acompletion(
-        model="deepseek/deepseek-chat",
-        api_base="https://api.deepseek.com/v1",
-        api_key=api_key,
-        messages=[
+    llm_cfg = _resolve_dashboard_llm_config()
+    completion_kwargs: Dict[str, Any] = {
+        "model": llm_cfg["model"],
+        "messages": [
             {"role": "system", "content": SPEC_SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ],
-        response_format={"type": "json_object"},
-        temperature=0.1,
-        max_tokens=1500,
-        timeout=60,
-    )
+        "temperature": 0.1,
+        "max_tokens": 1500,
+        "timeout": 60,
+    }
+    if llm_cfg.get("api_base"):
+        completion_kwargs["api_base"] = llm_cfg["api_base"]
+    if llm_cfg.get("api_key"):
+        completion_kwargs["api_key"] = llm_cfg["api_key"]
+    if llm_cfg.get("use_json_format", True):
+        completion_kwargs["response_format"] = {"type": "json_object"}
+
+    resp = await acompletion(**completion_kwargs)
 
     spec = _extract_json(resp.choices[0].message.content or "{}")
     _enforce_forecast_intent(req.question, spec)
