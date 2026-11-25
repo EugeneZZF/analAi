@@ -127,8 +127,12 @@ export const createCodeBlock = (HighlightRules: any) => {
       useState<boolean>(false);
 
     useEffect(() => {
-      const { cssText } = ace.require('ace/theme/tomorrow');
-      addThemeStyleManually(cssText);
+      const theme =
+        ace.require('ace/theme/tomorrow_night') ||
+        ace.require('ace/theme/tomorrow');
+      if (theme?.cssText) {
+        addThemeStyleManually(theme.cssText);
+      }
     }, []);
 
     useEffect(() => {

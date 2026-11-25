@@ -117,15 +117,24 @@ export default function TextBasedAnswer(props: AnswerResultProps) {
   const [previewData, previewDataResult] = usePreviewDataMutation({
     onError: (error) => console.error(error),
   });
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const hasPreviewData = !!previewDataResult.data?.previewData;
 
   const onPreviewData = async () => {
-    await previewData({ variables: { where: { responseId: id } } });
+    if (isPreviewVisible && hasPreviewData) {
+      setIsPreviewVisible(false);
+      return;
+    }
+    setIsPreviewVisible(true);
+    if (!hasPreviewData) {
+      await previewData({ variables: { where: { responseId: id } } });
+    }
   };
 
   const autoTriggerPreviewDataButton = async () => {
     await nextTick();
-    await onPreviewData();
+    setIsPreviewVisible(true);
+    await previewData({ variables: { where: { responseId: id } } });
   };
 
   useEffect(() => {
@@ -245,23 +254,30 @@ export default function TextBasedAnswer(props: AnswerResultProps) {
                 data-ph-capture="true"
                 data-ph-capture-attribute-name="cta_text-answer_preview_data"
               >
-                View results
+                {isPreviewVisible && hasPreviewData
+                  ? 'Hide results'
+                  : 'View results'}
               </Button>
             </div>
 
-            <div className="mt-2 mb-3" data-guideid="text-answer-preview-data">
-              {hasPreviewData && (
-                <Text type="secondary" className="text-sm">
-                  Considering the limit of the context window, we retrieve up to
-                  500 rows of results to generate the answer.
-                </Text>
-              )}
-              <PreviewData
-                error={previewDataResult.error}
-                loading={previewDataResult.loading}
-                previewData={previewDataResult?.data?.previewData}
-              />
-            </div>
+            {isPreviewVisible && (
+              <div
+                className="mt-2 mb-3"
+                data-guideid="text-answer-preview-data"
+              >
+                {hasPreviewData && (
+                  <Text type="secondary" className="text-sm">
+                    Considering the limit of the context window, we retrieve up
+                    to 500 rows of results to generate the answer.
+                  </Text>
+                )}
+                <PreviewData
+                  error={previewDataResult.error}
+                  loading={previewDataResult.loading}
+                  previewData={previewDataResult?.data?.previewData}
+                />
+              </div>
+            )}
           </div>
         ) : (
           <>

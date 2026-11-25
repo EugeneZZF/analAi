@@ -409,6 +409,11 @@ def _render_dashboard_html(
     .ins-detail {{ font-size: 0.75rem; color: var(--muted); margin-top: 2px; line-height: 1.35; }}
 
     .table-toolbar {{ display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }}
+    .table-toggle {{ cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px; transition: color 0.15s; }}
+    .table-toggle:hover {{ color: var(--accent); }}
+    .table-card.collapsed .table-toolbar {{ margin-bottom: 0; }}
+    .table-card.collapsed .table-wrap,
+    .table-card.collapsed .search-input {{ display: none; }}
     .search-input {{
       padding: 5px 10px; border: 1px solid var(--border-soft); border-radius: 8px;
       background: #0d0d0d; color: var(--text); font-size: 0.78rem; width: 150px;
@@ -450,9 +455,11 @@ def _render_dashboard_html(
   <section id="bentoMid" class="bento-mid has-insights"></section>
 
   <section id="bentoBottom" class="bento-bottom">
-    <div class="card">
+    <div class="card table-card" id="detailsCard">
       <div class="table-toolbar">
-        <div class="card-title">Детализация (<span id="rowCountLabel">0</span>)</div>
+        <div class="card-title table-toggle" id="detailsToggle" title="Нажмите, чтобы скрыть или показать таблицу">
+          <span id="detailsArrow">▾</span> Детализация (<span id="rowCountLabel">0</span>)
+        </div>
         <input id="searchInput" class="search-input" type="search" placeholder="Поиск..." />
       </div>
       <div class="table-wrap"><table id="dataTable"><thead></thead><tbody></tbody></table></div>
@@ -991,6 +998,13 @@ def _render_dashboard_html(
     }}
 
     document.getElementById("searchInput").addEventListener("input", (e) => {{ searchTerm = e.target.value; renderTable(); }});
+    document.getElementById("detailsToggle").addEventListener("click", () => {{
+      const card = document.getElementById("detailsCard");
+      const arrow = document.getElementById("detailsArrow");
+      const collapsed = card.classList.toggle("collapsed");
+      arrow.textContent = collapsed ? "▸" : "▾";
+      setTimeout(notifyHeight, 50);
+    }});
     document.getElementById("exportCsvTop").addEventListener("click", exportCsv);
     function notifyHeight() {{
       try {{
