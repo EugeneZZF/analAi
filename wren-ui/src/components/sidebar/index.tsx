@@ -7,9 +7,10 @@ import { DiscordIcon, GithubIcon, SparklesIcon } from '@/utils/icons';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
 import Home, { Props as HomeSidebarProps } from './Home';
 import Modeling, { Props as ModelingSidebarProps } from './Modeling';
-import Knowledge from './Knowledge';
+import SkillsSidebar from './Skills';
 import APIManagement from './APIManagement';
 import LearningSection from '@/components/learning';
+import { useTranslation } from '@/hooks/useI18n';
 
 const Layout = styled.div`
   position: relative;
@@ -92,8 +93,11 @@ const DynamicSidebar = (
       return <Modeling {...(restProps as ModelingSidebarProps)} />;
     }
 
-    if (pathname.startsWith(Path.Knowledge)) {
-      return <Knowledge />;
+    if (
+      pathname.startsWith(Path.Skills) ||
+      pathname.startsWith('/knowledge')
+    ) {
+      return <SkillsSidebar />;
     }
 
     if (pathname.startsWith(Path.APIManagement)) {
@@ -109,6 +113,7 @@ const DynamicSidebar = (
 export default function Sidebar(props: Props) {
   const { onOpenSettings } = props;
   const router = useRouter();
+  const { t } = useTranslation();
 
   const onSettingsClick = (event) => {
     onOpenSettings && onOpenSettings();
@@ -151,7 +156,7 @@ export default function Sidebar(props: Props) {
       <div className="border-t border-gray-4 pt-2">
         <StyledButton type="text" block onClick={onSettingsClick}>
           <SettingOutlined className="text-md" />
-          Settings
+          {t('nav.settings')}
         </StyledButton>
         <StyledButton type="text" block>
           <Link

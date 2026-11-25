@@ -4,6 +4,8 @@ import { Spin } from 'antd';
 import posthog from 'posthog-js';
 import apolloClient from '@/apollo/client';
 import { GlobalConfigProvider } from '@/hooks/useGlobalConfig';
+import { AuthProvider } from '@/hooks/useAuth';
+import { I18nProvider } from '@/hooks/useI18n';
 import { PostHogProvider } from 'posthog-js/react';
 import { ApolloProvider } from '@apollo/client';
 import { defaultIndicator } from '@/components/PageLoading';
@@ -20,13 +22,17 @@ function App({ Component, pageProps }: AppProps) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <GlobalConfigProvider>
-        <ApolloProvider client={apolloClient}>
-          <PostHogProvider client={posthog}>
-            <main className="app">
-              <Component {...pageProps} />
-            </main>
-          </PostHogProvider>
-        </ApolloProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <ApolloProvider client={apolloClient}>
+              <PostHogProvider client={posthog}>
+                <main className="app">
+                  <Component {...pageProps} />
+                </main>
+              </PostHogProvider>
+            </ApolloProvider>
+          </AuthProvider>
+        </I18nProvider>
       </GlobalConfigProvider>
     </>
   );

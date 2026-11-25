@@ -23,11 +23,17 @@ export type SkillFragment = {
   projectId?: string | null;
   author: string;
   version: string;
+  isPublic: boolean;
+  authorId?: number | null;
+  isAdded: boolean;
+  authorName?: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
-export type SkillsQueryVariables = Types.Exact<{ [key: string]: never }>;
+export type SkillsQueryVariables = Types.Exact<{
+  scope?: Types.InputMaybe<Types.Scalars['String']>;
+}>;
 
 export type SkillsQuery = {
   __typename?: 'Query';
@@ -90,14 +96,18 @@ export const SkillFragmentDoc = gql`
     projectId
     author
     version
+    isPublic
+    authorId
+    isAdded
+    authorName
     createdAt
     updatedAt
   }
 `;
 
 export const SkillsDocument = gql`
-  query Skills {
-    skills {
+  query Skills($scope: String) {
+    skills(scope: $scope) {
       ...Skill
     }
   }
@@ -207,4 +217,60 @@ export function useDeleteSkillMutation(
     DeleteSkillDocument,
     options,
   );
+}
+
+export type AddSkillToUserMutationVariables = Types.Exact<{
+  where: Types.SkillWhereInput;
+}>;
+
+export type AddSkillToUserMutation = {
+  __typename?: 'Mutation';
+  addSkillToUser: boolean;
+};
+
+export const AddSkillToUserDocument = gql`
+  mutation AddSkillToUser($where: SkillWhereInput!) {
+    addSkillToUser(where: $where)
+  }
+`;
+
+export function useAddSkillToUserMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    AddSkillToUserMutation,
+    AddSkillToUserMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<
+    AddSkillToUserMutation,
+    AddSkillToUserMutationVariables
+  >(AddSkillToUserDocument, options);
+}
+
+export type RemoveSkillFromUserMutationVariables = Types.Exact<{
+  where: Types.SkillWhereInput;
+}>;
+
+export type RemoveSkillFromUserMutation = {
+  __typename?: 'Mutation';
+  removeSkillFromUser: boolean;
+};
+
+export const RemoveSkillFromUserDocument = gql`
+  mutation RemoveSkillFromUser($where: SkillWhereInput!) {
+    removeSkillFromUser(where: $where)
+  }
+`;
+
+export function useRemoveSkillFromUserMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    RemoveSkillFromUserMutation,
+    RemoveSkillFromUserMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<
+    RemoveSkillFromUserMutation,
+    RemoveSkillFromUserMutationVariables
+  >(RemoveSkillFromUserDocument, options);
 }

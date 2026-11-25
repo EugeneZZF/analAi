@@ -14,6 +14,7 @@ import {
 } from '@/apollo/server/utils/error';
 import { TelemetryEvent } from '@/apollo/server/telemetry/telemetry';
 import { components } from '@/common';
+import { extractTokenFromRequest } from '@/apollo/server/utils/auth';
 
 const serverConfig = getConfig();
 const logger = getLogger('APOLLO');
@@ -62,6 +63,7 @@ const bootstrapServer = async () => {
     sqlPairService,
 
     instructionService,
+    authService,
     // background trackers
     projectRecommendQuestionBackgroundTracker,
     threadRecommendQuestionBackgroundTracker,
@@ -125,8 +127,26 @@ const bootstrapServer = async () => {
       return defaultApolloErrorHandler(error);
     },
     introspection: process.env.NODE_ENV !== 'production',
-    context: (): IContext => ({
-      config: serverConfig,
+    context: async ({ req }): Promise<IContext> => {
+      const token = req ? extractTokenFromRequest(req) : null;
+      let currentUser = await authService.getUserFromToken(token);
+      if (
+        !currentUser &&
+        req?.headers?.host?.startsWith('wren-ui:') &&
+        !req?.headers?.origin
+      ) {
+        currentUser = {
+          userId: 0,
+          email: 'system@internal',
+          name: 'System',
+          role: 'admin',
+          language: 'ru',
+        };
+      }
+      return {
+        currentUser,
+        authService,
+        config: serverConfig,
       telemetry,
       // adaptor
       wrenEngineAdaptor,
@@ -162,7 +182,8 @@ const bootstrapServer = async () => {
       projectRecommendQuestionBackgroundTracker,
       threadRecommendQuestionBackgroundTracker,
       dashboardCacheBackgroundTracker,
-    }),
+      };
+    },
   });
   await apolloServer.start();
   return apolloServer;

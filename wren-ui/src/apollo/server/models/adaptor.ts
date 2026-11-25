@@ -354,6 +354,10 @@ export interface SkillDocument {
   projectId?: string | null;
   author: string;
   version: string;
+  isPublic?: boolean;
+  authorId?: number | null;
+  isAdded?: boolean;
+  authorName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -372,6 +376,7 @@ export interface SaveSkillInput {
   enabled?: boolean;
   isGlobal?: boolean;
   isShared?: boolean;
+  isPublic?: boolean;
   projectId?: string;
   author?: string;
   version?: string;
@@ -381,5 +386,6 @@ export interface ImportSkillInput {
   rawMarkdown: string;
   projectId?: string;
   isShared?: boolean;
+  isPublic?: boolean;
   overwrite?: boolean;
 }

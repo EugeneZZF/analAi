@@ -1131,6 +1131,10 @@ export const typeDefs = gql`
     projectId: String
     author: String!
     version: String!
+    isPublic: Boolean!
+    authorId: Int
+    isAdded: Boolean!
+    authorName: String
     createdAt: String!
     updatedAt: String!
   }
@@ -1148,6 +1152,7 @@ export const typeDefs = gql`
     enabled: Boolean
     isGlobal: Boolean
     isShared: Boolean
+    isPublic: Boolean
     author: String
     version: String
   }
@@ -1165,6 +1170,7 @@ export const typeDefs = gql`
     enabled: Boolean
     isGlobal: Boolean
     isShared: Boolean
+    isPublic: Boolean
     author: String
     version: String
   }
@@ -1172,6 +1178,7 @@ export const typeDefs = gql`
   input ImportSkillInput {
     rawMarkdown: String!
     isShared: Boolean
+    isPublic: Boolean
     overwrite: Boolean
   }
 
@@ -1231,7 +1238,7 @@ export const typeDefs = gql`
     # Instructions
     instructions: [Instruction]!
     # Skills Library
-    skills: [Skill!]!
+    skills(scope: String): [Skill!]!
     skill(where: SkillWhereInput!): Skill
 
     # Api History
@@ -1389,5 +1396,7 @@ export const typeDefs = gql`
     updateSkill(where: SkillWhereInput!, data: UpdateSkillInput!): Skill!
     importSkill(data: ImportSkillInput!): Skill!
     deleteSkill(where: SkillWhereInput!): Boolean!
+    addSkillToUser(where: SkillWhereInput!): Boolean!
+    removeSkillFromUser(where: SkillWhereInput!): Boolean!
   }
 `;

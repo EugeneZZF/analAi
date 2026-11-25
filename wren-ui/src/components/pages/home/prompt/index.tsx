@@ -11,6 +11,7 @@ import { Select, Tag, Tooltip } from 'antd';
 import ThunderboltOutlined from '@ant-design/icons/ThunderboltOutlined';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
 import { Path, PROCESS_STATE } from '@/utils/enum';
+import { useTranslation } from '@/hooks/useI18n';
 import PromptInput from '@/components/pages/home/prompt/Input';
 import PromptResult from '@/components/pages/home/prompt/Result';
 import useAskProcessState, {
@@ -60,6 +61,7 @@ const PromptStyle = styled.div`
 `;
 
 export default forwardRef<Attributes, Props>(function Prompt(props, ref) {
+  const { t } = useTranslation();
   const {
     data,
     loading,
@@ -172,7 +174,7 @@ export default forwardRef<Attributes, Props>(function Prompt(props, ref) {
           <Tooltip title="Агент автоматически подбирает скиллы по контексту вопроса. Вы также можете явно выбрать скиллы здесь:">
             <span className="text-xs gray-7 d-flex align-center" style={{ whiteSpace: 'nowrap' }}>
               <ThunderboltOutlined className="geekblue-6 mr-1" />
-              Skills:
+              {t('prompt.skillsSelectorLabel')}
             </span>
           </Tooltip>
           <Select
@@ -181,7 +183,7 @@ export default forwardRef<Attributes, Props>(function Prompt(props, ref) {
             allowClear
             maxTagCount="responsive"
             style={{ flex: 1, minWidth: 200 }}
-            placeholder="Автоподбор по контексту (или выберите скиллы вручную)..."
+            placeholder={t('prompt.skillsAutoPlaceholder')}
             value={selectedSkillIds}
             onChange={(vals) => onChangeSelectedSkills?.(vals)}
             disabled={isProcessing}
@@ -209,12 +211,12 @@ export default forwardRef<Attributes, Props>(function Prompt(props, ref) {
           </Select>
         </div>
         <Link
-          href={Path.KnowledgeSkills}
+          href={Path.SkillsLibrary}
           className="text-xs geekblue-6 d-flex align-center"
           style={{ whiteSpace: 'nowrap' }}
         >
           <SettingOutlined className="mr-1" />
-          Библиотека скиллов ({availableSkills.length})
+          {t('prompt.libraryLink', { count: availableSkills.length })}
         </Link>
       </div>
       <div className="d-flex align-end">

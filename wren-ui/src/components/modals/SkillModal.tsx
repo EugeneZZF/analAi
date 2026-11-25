@@ -105,7 +105,7 @@ export default function SkillModal(props: Props) {
           rawMarkdown: defaultValue.rawMarkdown || '',
           enabled: defaultValue.enabled ?? true,
           isGlobal: defaultValue.isGlobal ?? false,
-          isShared: defaultValue.isShared ?? true,
+          isPublic: defaultValue.isPublic ?? defaultValue.isShared ?? true,
           author: defaultValue.author || 'User',
           version: defaultValue.version || '1.0',
         });
@@ -124,7 +124,7 @@ export default function SkillModal(props: Props) {
           rawMarkdown: DEFAULT_SKILL_MD_TEMPLATE,
           enabled: true,
           isGlobal: false,
-          isShared: true,
+          isPublic: true,
           author: 'Data Team',
           version: '1.0',
         });
@@ -171,7 +171,8 @@ export default function SkillModal(props: Props) {
             id: defaultValue?.id,
             data: {
               rawMarkdown: values.rawMarkdown,
-              isShared: values.isShared ?? true,
+              isPublic: values.isPublic ?? true,
+              isShared: values.isPublic ?? true,
             },
           });
         } else {
@@ -192,7 +193,8 @@ export default function SkillModal(props: Props) {
               content: values.content || '',
               enabled: values.enabled ?? true,
               isGlobal: values.isGlobal ?? false,
-              isShared: values.isShared ?? true,
+              isPublic: values.isPublic ?? true,
+              isShared: values.isPublic ?? true,
               author: values.author || 'User',
               version: values.version || '1.0',
             },
@@ -329,12 +331,12 @@ export default function SkillModal(props: Props) {
               </Col>
               <Col span={6}>
                 <Form.Item
-                  label="Общая библиотека (Shared)"
-                  name="isShared"
+                  label="Видимость (Public / Private)"
+                  name="isPublic"
                   valuePropName="checked"
-                  extra="Доступен всем пользователям"
+                  extra="Публичный виден всем в Library"
                 >
-                  <Switch checkedChildren="Да" unCheckedChildren="Личный" />
+                  <Switch checkedChildren="Public" unCheckedChildren="Private" />
                 </Form.Item>
               </Col>
             </Row>
@@ -439,11 +441,11 @@ export default function SkillModal(props: Props) {
               />
             </Form.Item>
             <Form.Item
-              label="Опубликовать в общую библиотеку (Shared Library)"
-              name="isShared"
+              label="Опубликовать в общую библиотеку (Library)"
+              name="isPublic"
               valuePropName="checked"
             >
-              <Switch checkedChildren="Общий" unCheckedChildren="Личный" />
+              <Switch checkedChildren="Public" unCheckedChildren="Private" />
             </Form.Item>
           </>
         )}

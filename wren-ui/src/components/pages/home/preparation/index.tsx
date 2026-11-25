@@ -6,6 +6,7 @@ import DownOutlined from '@ant-design/icons/DownOutlined';
 import ErrorBoundary from './ErrorBoundary';
 import PreparationStatus from './PreparationStatus';
 import PreparationSteps from './PreparationSteps';
+import { useTranslation } from '@/hooks/useI18n';
 import { IPromptThreadStore } from '@/components/pages/home/promptThread/store';
 import {
   ThreadResponse,
@@ -49,6 +50,7 @@ export default function Preparation(props: Props) {
   useEffect(() => {
     setIsActive(!minimized);
   }, [minimized]);
+  const { t } = useTranslation();
   const error = useMemo(() => {
     return preparedTask?.error && !sql
       ? {
@@ -88,12 +90,12 @@ export default function Preparation(props: Props) {
               <Typography.Title level={5} className="gray-8 text-medium mb-0">
                 <Image
                   src="/images/icon/message-ai.svg"
-                  alt="Answer Preparation Steps"
+                  alt={t('preparation.title')}
                   width={24}
                   height={24}
                   className="mr-1"
                 />
-                Answer preparation steps
+                {t('preparation.title')}
               </Typography.Title>
               <PreparationStatus {...props} preparedTask={preparedTask} />
             </div>
