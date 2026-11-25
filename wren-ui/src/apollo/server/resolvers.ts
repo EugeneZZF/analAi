@@ -11,6 +11,38 @@ import { SkillResolver } from './resolvers/skillResolver';
 import { ApiHistoryResolver } from './resolvers/apiHistoryResolver';
 import { convertColumnType } from '@server/utils';
 import { DialectSQLScalar } from './scalars';
+import { IContext } from '@server/types';
+import { UnauthorizedApolloError } from '@server/utils/auth';
+
+const withAuth = <TArgs = any, TResult = any>(
+  resolver: (root: any, args: TArgs, ctx: IContext, info: any) => Promise<TResult> | TResult,
+) => {
+  return async (root: any, args: TArgs, ctx: IContext, info: any) => {
+    if (!ctx.currentUser) {
+      throw new UnauthorizedApolloError();
+    }
+    return resolver(root, args, ctx, info);
+  };
+};
+
+const withProjectAccess = <TArgs = any, TResult = any>(
+  resolver: (root: any, args: TArgs, ctx: IContext, info: any) => Promise<TResult> | TResult,
+) => {
+  return async (root: any, args: TArgs, ctx: IContext, info: any) => {
+    if (!ctx.currentUser) {
+      throw new UnauthorizedApolloError();
+    }
+    let projectId: number | null = null;
+    try {
+      const project = await ctx.projectService.getCurrentProject();
+      projectId = project?.id ?? null;
+    } catch (_e) {
+      projectId = null;
+    }
+    await ctx.authService.assertProjectAccess(ctx.currentUser, projectId);
+    return resolver(root, args, ctx, info);
+  };
+};
 
 const projectResolver = new ProjectResolver();
 const modelResolver = new ModelResolver();
@@ -26,167 +58,193 @@ const resolvers = {
   JSON: GraphQLJSON,
   DialectSQL: DialectSQLScalar,
   Query: {
-    listDataSourceTables: projectResolver.listDataSourceTables,
-    autoGenerateRelation: projectResolver.autoGenerateRelation,
-    listModels: modelResolver.listModels,
-    model: modelResolver.getModel,
-    onboardingStatus: projectResolver.getOnboardingStatus,
-    modelSync: modelResolver.checkModelSync,
-    diagram: diagramResolver.getDiagram,
-    schemaChange: projectResolver.getSchemaChange,
+    listDataSourceTables: withProjectAccess(projectResolver.listDataSourceTables),
+    autoGenerateRelation: withProjectAccess(projectResolver.autoGenerateRelation),
+    listModels: withProjectAccess(modelResolver.listModels),
+    model: withProjectAccess(modelResolver.getModel),
+    onboardingStatus: withAuth(projectResolver.getOnboardingStatus),
+    modelSync: withProjectAccess(modelResolver.checkModelSync),
+    diagram: withProjectAccess(diagramResolver.getDiagram),
+    schemaChange: withProjectAccess(projectResolver.getSchemaChange),
 
     // Ask
-    askingTask: askingResolver.getAskingTask,
-    suggestedQuestions: askingResolver.getSuggestedQuestions,
-    instantRecommendedQuestions: askingResolver.getInstantRecommendedQuestions,
+    askingTask: withProjectAccess(askingResolver.getAskingTask),
+    suggestedQuestions: withProjectAccess(askingResolver.getSuggestedQuestions),
+    instantRecommendedQuestions: withProjectAccess(
+      askingResolver.getInstantRecommendedQuestions,
+    ),
 
     // Adjustment
-    adjustmentTask: askingResolver.getAdjustmentTask,
+    adjustmentTask: withProjectAccess(askingResolver.getAdjustmentTask),
 
     // Thread
-    thread: askingResolver.getThread,
-    threads: askingResolver.listThreads,
-    threadResponse: askingResolver.getResponse,
-    nativeSql: modelResolver.getNativeSql,
+    thread: withProjectAccess(askingResolver.getThread),
+    threads: withProjectAccess(askingResolver.listThreads),
+    threadResponse: withProjectAccess(askingResolver.getResponse),
+    nativeSql: withProjectAccess(modelResolver.getNativeSql),
 
     // Views
-    listViews: modelResolver.listViews,
-    view: modelResolver.getView,
+    listViews: withProjectAccess(modelResolver.listViews),
+    view: withProjectAccess(modelResolver.getView),
 
     // Settings
-    settings: projectResolver.getSettings,
-    getMDL: modelResolver.getMDL,
+    settings: withAuth(projectResolver.getSettings),
+    getMDL: withProjectAccess(modelResolver.getMDL),
 
     // Learning
-    learningRecord: learningResolver.getLearningRecord,
+    learningRecord: withAuth(learningResolver.getLearningRecord),
 
     // Recommendation questions
-    getThreadRecommendationQuestions:
+    getThreadRecommendationQuestions: withProjectAccess(
       askingResolver.getThreadRecommendationQuestions,
-    getProjectRecommendationQuestions:
+    ),
+    getProjectRecommendationQuestions: withProjectAccess(
       projectResolver.getProjectRecommendationQuestions,
+    ),
 
     // Dashboard
-    dashboardItems: dashboardResolver.getDashboardItems,
-    dashboard: dashboardResolver.getDashboard,
+    dashboardItems: withProjectAccess(dashboardResolver.getDashboardItems),
+    dashboard: withProjectAccess(dashboardResolver.getDashboard),
 
     // SQL Pairs
-    sqlPairs: sqlPairResolver.getProjectSqlPairs,
+    sqlPairs: withProjectAccess(sqlPairResolver.getProjectSqlPairs),
     // Instructions
-    instructions: instructionResolver.getInstructions,
+    instructions: withProjectAccess(instructionResolver.getInstructions),
     // Skills Library
     skills: skillResolver.getSkills,
     skill: skillResolver.getSkill,
 
     // API History
-    apiHistory: apiHistoryResolver.getApiHistory,
+    apiHistory: withProjectAccess(apiHistoryResolver.getApiHistory),
   },
   Mutation: {
-    deploy: modelResolver.deploy,
-    saveDataSource: projectResolver.saveDataSource,
-    startSampleDataset: projectResolver.startSampleDataset,
-    saveTables: projectResolver.saveTables,
-    saveRelations: projectResolver.saveRelations,
-    createModel: modelResolver.createModel,
-    updateModel: modelResolver.updateModel,
-    deleteModel: modelResolver.deleteModel,
-    previewModelData: modelResolver.previewModelData,
-    updateModelMetadata: modelResolver.updateModelMetadata,
-    triggerDataSourceDetection: projectResolver.triggerDataSourceDetection,
-    resolveSchemaChange: projectResolver.resolveSchemaChange,
+    deploy: withProjectAccess(modelResolver.deploy),
+    saveDataSource: withProjectAccess(projectResolver.saveDataSource),
+    startSampleDataset: withProjectAccess(projectResolver.startSampleDataset),
+    saveTables: withProjectAccess(projectResolver.saveTables),
+    saveRelations: withProjectAccess(projectResolver.saveRelations),
+    createModel: withProjectAccess(modelResolver.createModel),
+    updateModel: withProjectAccess(modelResolver.updateModel),
+    deleteModel: withProjectAccess(modelResolver.deleteModel),
+    previewModelData: withProjectAccess(modelResolver.previewModelData),
+    updateModelMetadata: withProjectAccess(modelResolver.updateModelMetadata),
+    triggerDataSourceDetection: withProjectAccess(
+      projectResolver.triggerDataSourceDetection,
+    ),
+    resolveSchemaChange: withProjectAccess(projectResolver.resolveSchemaChange),
 
     // calculated field
-    createCalculatedField: modelResolver.createCalculatedField,
-    validateCalculatedField: modelResolver.validateCalculatedField,
-    updateCalculatedField: modelResolver.updateCalculatedField,
-    deleteCalculatedField: modelResolver.deleteCalculatedField,
+    createCalculatedField: withProjectAccess(modelResolver.createCalculatedField),
+    validateCalculatedField: withProjectAccess(
+      modelResolver.validateCalculatedField,
+    ),
+    updateCalculatedField: withProjectAccess(modelResolver.updateCalculatedField),
+    deleteCalculatedField: withProjectAccess(modelResolver.deleteCalculatedField),
 
     // relation
-    createRelation: modelResolver.createRelation,
-    updateRelation: modelResolver.updateRelation,
-    deleteRelation: modelResolver.deleteRelation,
+    createRelation: withProjectAccess(modelResolver.createRelation),
+    updateRelation: withProjectAccess(modelResolver.updateRelation),
+    deleteRelation: withProjectAccess(modelResolver.deleteRelation),
 
     // Ask
-    createAskingTask: askingResolver.createAskingTask,
-    cancelAskingTask: askingResolver.cancelAskingTask,
-    createInstantRecommendedQuestions:
+    createAskingTask: withProjectAccess(askingResolver.createAskingTask),
+    cancelAskingTask: withProjectAccess(askingResolver.cancelAskingTask),
+    createInstantRecommendedQuestions: withProjectAccess(
       askingResolver.createInstantRecommendedQuestions,
-    rerunAskingTask: askingResolver.rerunAskingTask,
+    ),
+    rerunAskingTask: withProjectAccess(askingResolver.rerunAskingTask),
 
     // Adjustment
-    adjustThreadResponse: askingResolver.adjustThreadResponse,
-    cancelAdjustmentTask: askingResolver.cancelAdjustThreadResponseAnswer,
-    rerunAdjustmentTask: askingResolver.rerunAdjustThreadResponseAnswer,
+    adjustThreadResponse: withProjectAccess(askingResolver.adjustThreadResponse),
+    cancelAdjustmentTask: withProjectAccess(
+      askingResolver.cancelAdjustThreadResponseAnswer,
+    ),
+    rerunAdjustmentTask: withProjectAccess(
+      askingResolver.rerunAdjustThreadResponseAnswer,
+    ),
 
     // Thread
-    createThread: askingResolver.createThread,
-    updateThread: askingResolver.updateThread,
-    deleteThread: askingResolver.deleteThread,
-    createThreadResponse: askingResolver.createThreadResponse,
-    updateThreadResponse: askingResolver.updateThreadResponse,
-    previewData: askingResolver.previewData,
-    previewBreakdownData: askingResolver.previewBreakdownData,
+    createThread: withProjectAccess(askingResolver.createThread),
+    updateThread: withProjectAccess(askingResolver.updateThread),
+    deleteThread: withProjectAccess(askingResolver.deleteThread),
+    createThreadResponse: withProjectAccess(askingResolver.createThreadResponse),
+    updateThreadResponse: withProjectAccess(askingResolver.updateThreadResponse),
+    previewData: withProjectAccess(askingResolver.previewData),
+    previewBreakdownData: withProjectAccess(askingResolver.previewBreakdownData),
 
     // Generate Thread Response Breakdown
-    generateThreadResponseBreakdown:
+    generateThreadResponseBreakdown: withProjectAccess(
       askingResolver.generateThreadResponseBreakdown,
+    ),
 
     // Generate Thread Response Answer
-    generateThreadResponseAnswer: askingResolver.generateThreadResponseAnswer,
+    generateThreadResponseAnswer: withProjectAccess(
+      askingResolver.generateThreadResponseAnswer,
+    ),
 
     // Generate Thread Response Chart
-    generateThreadResponseChart: askingResolver.generateThreadResponseChart,
+    generateThreadResponseChart: withProjectAccess(
+      askingResolver.generateThreadResponseChart,
+    ),
 
     // Adjust Thread Response Chart
-    adjustThreadResponseChart: askingResolver.adjustThreadResponseChart,
+    adjustThreadResponseChart: withProjectAccess(
+      askingResolver.adjustThreadResponseChart,
+    ),
 
     // Views
-    createView: modelResolver.createView,
-    deleteView: modelResolver.deleteView,
-    previewViewData: modelResolver.previewViewData,
-    validateView: modelResolver.validateView,
-    updateViewMetadata: modelResolver.updateViewMetadata,
+    createView: withProjectAccess(modelResolver.createView),
+    deleteView: withProjectAccess(modelResolver.deleteView),
+    previewViewData: withProjectAccess(modelResolver.previewViewData),
+    validateView: withProjectAccess(modelResolver.validateView),
+    updateViewMetadata: withProjectAccess(modelResolver.updateViewMetadata),
 
     // Settings
-    resetCurrentProject: projectResolver.resetCurrentProject,
-    updateCurrentProject: projectResolver.updateCurrentProject,
-    updateDataSource: projectResolver.updateDataSource,
+    resetCurrentProject: withProjectAccess(projectResolver.resetCurrentProject),
+    updateCurrentProject: withProjectAccess(projectResolver.updateCurrentProject),
+    updateDataSource: withProjectAccess(projectResolver.updateDataSource),
 
     // preview
-    previewSql: modelResolver.previewSql,
+    previewSql: withProjectAccess(modelResolver.previewSql),
 
     // Learning
-    saveLearningRecord: learningResolver.saveLearningRecord,
+    saveLearningRecord: withAuth(learningResolver.saveLearningRecord),
 
     // Recommendation questions
-    generateThreadRecommendationQuestions:
+    generateThreadRecommendationQuestions: withProjectAccess(
       askingResolver.generateThreadRecommendationQuestions,
-    generateProjectRecommendationQuestions:
+    ),
+    generateProjectRecommendationQuestions: withProjectAccess(
       askingResolver.generateProjectRecommendationQuestions,
+    ),
 
     // Dashboard
-    updateDashboardItemLayouts: dashboardResolver.updateDashboardItemLayouts,
-    createDashboardItem: dashboardResolver.createDashboardItem,
-    updateDashboardItem: dashboardResolver.updateDashboardItem,
-    deleteDashboardItem: dashboardResolver.deleteDashboardItem,
-    previewItemSQL: dashboardResolver.previewItemSQL,
-    setDashboardSchedule: dashboardResolver.setDashboardSchedule,
+    updateDashboardItemLayouts: withProjectAccess(
+      dashboardResolver.updateDashboardItemLayouts,
+    ),
+    createDashboardItem: withProjectAccess(dashboardResolver.createDashboardItem),
+    updateDashboardItem: withProjectAccess(dashboardResolver.updateDashboardItem),
+    deleteDashboardItem: withProjectAccess(dashboardResolver.deleteDashboardItem),
+    previewItemSQL: withProjectAccess(dashboardResolver.previewItemSQL),
+    setDashboardSchedule: withProjectAccess(dashboardResolver.setDashboardSchedule),
 
     // SQL Pairs
-    createSqlPair: sqlPairResolver.createSqlPair,
-    updateSqlPair: sqlPairResolver.updateSqlPair,
-    deleteSqlPair: sqlPairResolver.deleteSqlPair,
-    generateQuestion: sqlPairResolver.generateQuestion,
-    modelSubstitute: sqlPairResolver.modelSubstitute,
+    createSqlPair: withProjectAccess(sqlPairResolver.createSqlPair),
+    updateSqlPair: withProjectAccess(sqlPairResolver.updateSqlPair),
+    deleteSqlPair: withProjectAccess(sqlPairResolver.deleteSqlPair),
+    generateQuestion: withProjectAccess(sqlPairResolver.generateQuestion),
+    modelSubstitute: withProjectAccess(sqlPairResolver.modelSubstitute),
     // Instructions
-    createInstruction: instructionResolver.createInstruction,
-    updateInstruction: instructionResolver.updateInstruction,
-    deleteInstruction: instructionResolver.deleteInstruction,
+    createInstruction: withProjectAccess(instructionResolver.createInstruction),
+    updateInstruction: withProjectAccess(instructionResolver.updateInstruction),
+    deleteInstruction: withProjectAccess(instructionResolver.deleteInstruction),
     // Skills Library
     createSkill: skillResolver.createSkill,
     updateSkill: skillResolver.updateSkill,
     importSkill: skillResolver.importSkill,
     deleteSkill: skillResolver.deleteSkill,
+    addSkillToUser: skillResolver.addSkillToUser,
+    removeSkillFromUser: skillResolver.removeSkillFromUser,
   },
   ThreadResponse: askingResolver.getThreadResponseNestedResolver(),
   DetailStep: askingResolver.getDetailStepNestedResolver(),

@@ -9,6 +9,7 @@ import InfoCircleOutlined from '@ant-design/icons/InfoCircleOutlined';
 import DataSourceSettings from './DataSourceSettings';
 import ProjectSettings from './ProjectSettings';
 import { getSettingMenu } from './utils';
+import { useTranslation } from '@/hooks/useI18n';
 import {
   useGetSettingsLazyQuery,
   GetSettingsQuery,
@@ -75,6 +76,7 @@ const DynamicComponent = ({
 };
 
 const MenuTemplate = ({ currentMenu, value, onClick }) => {
+  const { t } = useTranslation();
   const current = getSettingMenu(value);
   return (
     <StyledButton
@@ -84,7 +86,7 @@ const MenuTemplate = ({ currentMenu, value, onClick }) => {
       onClick={() => onClick({ value })}
       icon={<current.icon />}
     >
-      {current.label}
+      {t(current.labelKey)}
     </StyledButton>
   );
 };
@@ -93,6 +95,7 @@ const MenuIterator = makeIterable(MenuTemplate);
 
 export default function Settings(props: Props) {
   const { onClose, visible } = props;
+  const { t } = useTranslation();
   const [menu, setMenu] = useState<SETTINGS>(SETTINGS.DATA_SOURCE);
   const current = getSettingMenu(menu);
   const menuList = Object.keys(SETTINGS).map((key) => ({
@@ -127,7 +130,7 @@ export default function Settings(props: Props) {
         <StyledSider width={310} className="border-r border-gray-4">
           <div className="gray-9 text-bold py-3 px-5">
             <SettingOutlined className="mr-2" />
-            Settings
+            {t('settings.title')}
           </div>
           <div className="p-3 flex-grow-1">
             <MenuIterator
@@ -139,14 +142,14 @@ export default function Settings(props: Props) {
           {!!productVersion && (
             <div className="gray-7 d-flex align-center p-3 px-5">
               <InfoCircleOutlined className="mr-2 text-sm" />
-              Wren AI version: {productVersion}
+              {t('settings.version')}: {productVersion}
             </div>
           )}
         </StyledSider>
         <Content className="d-flex flex-column">
           <div className="d-flex align-center gray-9 border-b border-gray-4 text-bold py-3 px-4">
             <current.icon className="mr-2" />
-            {current.label}
+            {t(current.labelKey)}
           </div>
           <div className="flex-grow-1" style={{ overflowY: 'auto' }}>
             <DynamicComponent

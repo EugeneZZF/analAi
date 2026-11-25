@@ -136,6 +136,10 @@ export type Skill = {
   projectId?: Maybe<Scalars['String']>;
   author: Scalars['String'];
   version: Scalars['String'];
+  isPublic: Scalars['Boolean'];
+  authorId?: Maybe<Scalars['Int']>;
+  isAdded: Scalars['Boolean'];
+  authorName?: Maybe<Scalars['String']>;
   createdAt: Scalars['String'];
   updatedAt: Scalars['String'];
 };
@@ -153,6 +157,7 @@ export type CreateSkillInput = {
   enabled?: InputMaybe<Scalars['Boolean']>;
   isGlobal?: InputMaybe<Scalars['Boolean']>;
   isShared?: InputMaybe<Scalars['Boolean']>;
+  isPublic?: InputMaybe<Scalars['Boolean']>;
   author?: InputMaybe<Scalars['String']>;
   version?: InputMaybe<Scalars['String']>;
 };
@@ -170,6 +175,7 @@ export type UpdateSkillInput = {
   enabled?: InputMaybe<Scalars['Boolean']>;
   isGlobal?: InputMaybe<Scalars['Boolean']>;
   isShared?: InputMaybe<Scalars['Boolean']>;
+  isPublic?: InputMaybe<Scalars['Boolean']>;
   author?: InputMaybe<Scalars['String']>;
   version?: InputMaybe<Scalars['String']>;
 };
@@ -177,6 +183,7 @@ export type UpdateSkillInput = {
 export type ImportSkillInput = {
   rawMarkdown: Scalars['String'];
   isShared?: InputMaybe<Scalars['Boolean']>;
+  isPublic?: InputMaybe<Scalars['Boolean']>;
   overwrite?: InputMaybe<Scalars['Boolean']>;
 };
 

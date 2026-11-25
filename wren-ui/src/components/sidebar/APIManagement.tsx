@@ -6,6 +6,7 @@ import { OpenInNewIcon } from '@/utils/icons';
 import ApiOutlined from '@ant-design/icons/ApiOutlined';
 import ReadOutlined from '@ant-design/icons/ReadOutlined';
 import SidebarMenu from '@/components/sidebar/SidebarMenu';
+import { useTranslation } from '@/hooks/useI18n';
 
 const Layout = styled.div`
   padding: 16px 0;
@@ -26,13 +27,14 @@ const linkStyle = { color: 'inherit', transition: 'none' };
 
 export default function APIManagement() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const menuItems = [
     {
       'data-guideid': 'api-history',
       label: (
         <Link style={linkStyle} href={Path.APIManagementHistory}>
-          API history
+          {t('nav.apiHistory')}
         </Link>
       ),
       icon: <ApiOutlined />,
@@ -47,7 +49,7 @@ export default function APIManagement() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          API reference
+          {t('nav.apiReference')}
           <OpenInNewIcon className="ml-1" />
         </Link>
       ),

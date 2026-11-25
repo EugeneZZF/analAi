@@ -1,0 +1,81 @@
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import styled from 'styled-components';
+import FunctionOutlined from '@ant-design/icons/FunctionOutlined';
+import ThunderboltOutlined from '@ant-design/icons/ThunderboltOutlined';
+import { Path, MENU_KEY } from '@/utils/enum';
+import { InstructionsSVG } from '@/utils/svgs';
+import SidebarMenu from '@/components/sidebar/SidebarMenu';
+import { useTranslation } from '@/hooks/useI18n';
+
+const Layout = styled.div`
+  padding: 16px 0;
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  background-color: var(--gray-2);
+  overflow: hidden;
+`;
+
+const MENU_KEY_MAP = {
+  [Path.SkillsQuestionSQLPairs]: MENU_KEY.QUESTION_SQL_PAIRS,
+  [Path.SkillsInstructions]: MENU_KEY.INSTRUCTIONS,
+  [Path.SkillsLibrary]: MENU_KEY.SKILLS,
+  '/knowledge/question-sql-pairs': MENU_KEY.QUESTION_SQL_PAIRS,
+  '/knowledge/instructions': MENU_KEY.INSTRUCTIONS,
+  '/knowledge/skills': MENU_KEY.SKILLS,
+};
+
+const linkStyle = { color: 'inherit', transition: 'none' };
+
+export default function SkillsSidebar() {
+  const router = useRouter();
+  const { t } = useTranslation();
+
+  const menuItems = [
+    {
+      'data-guideid': 'question-sql-pairs',
+      label: (
+        <Link style={linkStyle} href={Path.SkillsQuestionSQLPairs}>
+          {t('nav.questionSqlPairs')}
+        </Link>
+      ),
+      icon: <FunctionOutlined />,
+      key: MENU_KEY.QUESTION_SQL_PAIRS,
+      className: 'pl-4',
+    },
+    {
+      'data-guideid': 'instructions',
+      label: (
+        <Link style={linkStyle} href={Path.SkillsInstructions}>
+          {t('nav.instructions')}
+        </Link>
+      ),
+      icon: <InstructionsSVG />,
+      key: MENU_KEY.INSTRUCTIONS,
+      className: 'pl-4',
+    },
+    {
+      'data-guideid': 'skills',
+      label: (
+        <Link style={linkStyle} href={Path.SkillsLibrary}>
+          {t('nav.library')}
+        </Link>
+      ),
+      icon: <ThunderboltOutlined />,
+      key: MENU_KEY.SKILLS,
+      className: 'pl-4',
+    },
+  ];
+
+  return (
+    <Layout>
+      <SidebarMenu
+        items={menuItems}
+        selectedKeys={MENU_KEY_MAP[router.pathname]}
+      />
+    </Layout>
+  );
+}

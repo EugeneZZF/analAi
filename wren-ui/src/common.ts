@@ -43,6 +43,7 @@ import {
   DashboardCacheBackgroundTracker,
 } from './apollo/server/backgrounds';
 import { SqlPairService } from './apollo/server/services/sqlPairService';
+import { AuthService } from './apollo/server/services/authService';
 
 export const serverConfig = getConfig();
 
@@ -213,6 +214,7 @@ export const initComponents = () => {
     sqlPairService,
     instructionService,
     askingTaskTracker,
+    authService: new AuthService(knex),
 
     // background trackers
     projectRecommendQuestionBackgroundTracker,

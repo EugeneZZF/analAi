@@ -16,6 +16,10 @@ export const SKILL = gql`
     isGlobal
     isShared
     isBuiltin
+    isPublic
+    authorId
+    isAdded
+    authorName
     projectId
     author
     version
@@ -25,8 +29,8 @@ export const SKILL = gql`
 `;
 
 export const LIST_SKILLS = gql`
-  query Skills {
-    skills {
+  query Skills($scope: String) {
+    skills(scope: $scope) {
       ...Skill
     }
   }
@@ -63,5 +67,17 @@ export const IMPORT_SKILL = gql`
 export const DELETE_SKILL = gql`
   mutation DeleteSkill($where: SkillWhereInput!) {
     deleteSkill(where: $where)
+  }
+`;
+
+export const ADD_SKILL_TO_USER = gql`
+  mutation AddSkillToUser($where: SkillWhereInput!) {
+    addSkillToUser(where: $where)
+  }
+`;
+
+export const REMOVE_SKILL_FROM_USER = gql`
+  mutation RemoveSkillFromUser($where: SkillWhereInput!) {
+    removeSkillFromUser(where: $where)
   }
 `;

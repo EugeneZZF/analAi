@@ -1,4 +1,5 @@
-import { Button, Modal, Select, Row, Col, Form, message } from 'antd';
+import { useState } from 'react';
+import { Button, Modal, Select, Row, Col, Form, Divider, message } from 'antd';
 import { useRouter } from 'next/router';
 import { Path } from '@/utils/enum';
 import {
@@ -7,6 +8,8 @@ import {
 } from '@/apollo/client/graphql/settings.generated';
 import { getLanguageText } from '@/utils/language';
 import { ProjectLanguage } from '@/apollo/client/graphql/__types__';
+import { useAuth } from '@/hooks/useAuth';
+import { LocaleCode, useTranslation } from '@/hooks/useI18n';
 
 interface Props {
   data: { language: string };
@@ -16,6 +19,10 @@ export default function ProjectSettings(props: Props) {
   const { data } = props;
   const router = useRouter();
   const [form] = Form.useForm();
+  const { updateLanguage } = useAuth();
+  const { locale, t } = useTranslation();
+  const [savingUiLang, setSavingUiLang] = useState(false);
+
   const [resetCurrentProject, { client }] = useResetCurrentProjectMutation({
     onError: (error) => console.error(error),
   });
@@ -27,15 +34,29 @@ export default function ProjectSettings(props: Props) {
     refetchQueries: ['GetSettings'],
     onError: (error) => console.error(error),
     onCompleted: () => {
-      message.success('Successfully updated project language.');
+      message.success(t('settings.projectLanguageUpdated'));
     },
   });
 
+  const handleInterfaceLanguageChange = async (nextLocale: LocaleCode) => {
+    setSavingUiLang(true);
+    try {
+      await updateLanguage(nextLocale);
+      message.success(t('settings.languageUpdated'));
+    } catch (err) {
+      console.error(err);
+      message.error(t('settings.languageUpdateError'));
+    } finally {
+      setSavingUiLang(false);
+    }
+  };
+
   const reset = () => {
     Modal.confirm({
-      title: 'Are you sure you want to reset?',
+      title: t('settings.resetConfirmTitle'),
       okButtonProps: { danger: true },
-      okText: 'Reset',
+      okText: t('common.reset'),
+      cancelText: t('common.cancel'),
       onOk: async () => {
         await resetCurrentProject();
         client.clearStore();
@@ -55,20 +76,39 @@ export default function ProjectSettings(props: Props) {
 
   return (
     <div className="py-3 px-4">
+      <Form layout="vertical">
+        <Form.Item
+          label={t('settings.interfaceLanguage')}
+          extra={t('settings.interfaceLanguageExtra')}
+        >
+          <Select
+            value={locale}
+            loading={savingUiLang}
+            onChange={handleInterfaceLanguageChange}
+            options={[
+              { label: t('settings.languageRu'), value: 'ru' },
+              { label: t('settings.languageEn'), value: 'en' },
+            ]}
+          />
+        </Form.Item>
+      </Form>
+
+      <Divider className="my-4" />
+
       <Form
         form={form}
         layout="vertical"
         initialValues={{ language: data.language }}
       >
         <Form.Item
-          label="Project language"
-          extra="This setting will affect the language in which the AI responds to you."
+          label={t('settings.projectLanguage')}
+          extra={t('settings.projectLanguageExtra')}
         >
           <Row gutter={16} wrap={false}>
             <Col className="flex-grow-1">
               <Form.Item name="language" noStyle>
                 <Select
-                  placeholder="Select a language"
+                  placeholder={t('settings.projectLanguage')}
                   showSearch
                   options={languageOptions}
                 />
@@ -77,24 +117,21 @@ export default function ProjectSettings(props: Props) {
             <Col>
               <Button
                 type="primary"
-                style={{ width: 70 }}
+                style={{ width: 100 }}
                 onClick={submit}
                 loading={loading}
               >
-                Save
+                {t('common.save')}
               </Button>
             </Col>
           </Row>
         </Form.Item>
       </Form>
-      <div className="gray-8 mb-2">Reset project</div>
-      <Button type="primary" style={{ width: 70 }} danger onClick={reset}>
-        Reset
+      <div className="gray-8 mb-2">{t('settings.resetProject')}</div>
+      <Button type="primary" style={{ width: 100 }} danger onClick={reset}>
+        {t('common.reset')}
       </Button>
-      <div className="gray-6 mt-1">
-        Please be aware that resetting will delete all current settings and
-        records, including those in the Modeling Page and Home Page threads.
-      </div>
+      <div className="gray-6 mt-1">{t('settings.resetWarning')}</div>
     </div>
   );
 }
