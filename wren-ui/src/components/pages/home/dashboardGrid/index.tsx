@@ -19,12 +19,14 @@ import { DashboardItemDropdown } from '@/components/diagram/CustomDropdown';
 import EditableWrapper, { EditableContext } from '@/components/EditableWrapper';
 import {
   DashboardItem,
+  DashboardItemType,
   ItemLayoutInput,
 } from '@/apollo/client/graphql/__types__';
 import {
   usePreviewItemSqlMutation,
   useUpdateDashboardItemMutation,
 } from '@/apollo/client/graphql/dashboard.generated';
+import { buildHtmlDashboardDocument } from '@/components/pages/home/promptThread/htmlDashboardBuilder';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -289,6 +291,12 @@ const PinnedItem = forwardRef(
     const [isHideLegend, setIsHideLegend] = useState(true);
     const [forceLoading, setForceLoading] = useState(false);
     const [forceUpdate, setForceUpdate] = useState(0);
+    const [pinnedHtml, setPinnedHtml] = useState<string>('');
+    const [htmlLoading, setHtmlLoading] = useState<boolean>(false);
+
+    const isHtmlDashboard =
+      item.type === DashboardItemType.TABLE ||
+      detail.chartSchema?.mode === 'html_dashboard';
 
     useImperativeHandle(
       ref,
@@ -325,6 +333,51 @@ const PinnedItem = forwardRef(
       return item.displayName || item.detail.chartSchema?.title || '';
     }, [item.displayName, item.detail.chartSchema?.title]);
 
+    useEffect(() => {
+      if (!isHtmlDashboard || !previewItem?.data?.length) return;
+      let cancelled = false;
+      const rows = previewItem.data as Record<string, any>[];
+      const cols = Object.keys(rows[0] || {}).map((name) => ({
+        name,
+        type: typeof rows[0][name] === 'number' ? 'DOUBLE' : 'VARCHAR',
+      }));
+      const fallback = buildHtmlDashboardDocument({
+        title: title || 'Pinned Dashboard',
+        sql: detail.sql,
+        columns: cols,
+        rows,
+      });
+
+      const run = async () => {
+        setHtmlLoading(true);
+        try {
+          const res = await fetch('/api/v1/html_dashboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              question: detail.chartSchema?.question || title || 'Dashboard',
+              sql: detail.sql || '',
+              columns: cols,
+              rows,
+            }),
+          });
+          const json = await res.json();
+          if (!cancelled) {
+            setPinnedHtml(json?.ok && json?.html ? json.html : fallback);
+          }
+        } catch (_err) {
+          if (!cancelled) setPinnedHtml(fallback);
+        } finally {
+          if (!cancelled) setHtmlLoading(false);
+        }
+      };
+
+      run();
+      return () => {
+        cancelled = true;
+      };
+    }, [isHtmlDashboard, previewItem?.data, detail.sql, title]);
+
     const onHideLegend = () => {
       setIsHideLegend(!isHideLegend);
       setForceUpdate((prev) => prev + 1);
@@ -342,7 +395,7 @@ const PinnedItem = forwardRef(
       }
     };
 
-    const loading = forceLoading || previewItemSQLResult.loading;
+    const loading = forceLoading || previewItemSQLResult.loading || htmlLoading;
 
     return (
       <div className="adm-pinned-item">
@@ -374,19 +427,36 @@ const PinnedItem = forwardRef(
         <div className="adm-pinned-content">
           <div className="adm-pinned-content-overflow adm-scrollbar-track">
             <LoadingWrapper loading={loading} tip="Loading...">
-              <Chart
-                className="adm-pinned-item-chart"
-                width="100%"
-                height="100%"
-                spec={detail.chartSchema}
-                values={previewItem?.data}
-                forceUpdate={forceUpdate}
-                autoFilter
-                hideActions
-                hideTitle
-                hideLegend={isHideLegend}
-                isPinned
-              />
+              {isHtmlDashboard ? (
+                <iframe
+                  title={`Pinned Dashboard ${item.id}`}
+                  srcDoc={pinnedHtml}
+                  sandbox="allow-scripts allow-downloads"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    minHeight: 420,
+                    border: 'none',
+                    borderRadius: 8,
+                    background: '#080909',
+                    display: 'block',
+                  }}
+                />
+              ) : (
+                <Chart
+                  className="adm-pinned-item-chart"
+                  width="100%"
+                  height="100%"
+                  spec={detail.chartSchema}
+                  values={previewItem?.data}
+                  forceUpdate={forceUpdate}
+                  autoFilter
+                  hideActions
+                  hideTitle
+                  hideLegend={isHideLegend}
+                  isPinned
+                />
+              )}
             </LoadingWrapper>
           </div>
           {lastRefreshTime && (

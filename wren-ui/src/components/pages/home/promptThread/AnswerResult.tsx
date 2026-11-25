@@ -104,6 +104,10 @@ const StyledTabs = styled(Tabs)`
         color: var(--gold-6);
       }
 
+      [aria-label='dashboard'] {
+        color: #ff8500;
+      }
+
       .adm-beta-tag {
         background-color: var(--geekblue-2);
         color: var(--geekblue-5);

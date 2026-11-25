@@ -62,8 +62,13 @@ const StyledTree = styled(Tree)`
       transition: background-color ease-out 0.12s;
 
       &-selected {
-        color: var(--geekblue-6);
-        background-color: var(--gray-4);
+        color: #ff8500;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 133, 0, 0.24) 0%,
+          rgba(255, 133, 0, 0.04) 100%
+        );
+        border-radius: 10px;
       }
 
       .ant-tree-switcher {
@@ -217,8 +222,13 @@ export const StyledTreeNodeLink = styled(Link)`
     background-color: var(--gray-6);
   }
   &.adm-treeNode--selected {
-    background-color: var(--gray-4);
-    color: var(--geekblue-6);
+    background: linear-gradient(
+      90deg,
+      rgba(255, 133, 0, 0.24) 0%,
+      rgba(255, 133, 0, 0.04) 100%
+    );
+    border-radius: 10px;
+    color: #ff8500;
   }
 `;
 

@@ -36,6 +36,7 @@ You are an expert detective specializing in intent classification. Combine the u
 - **Vague Queries:** If the question is vague or does not related to a table or property from the schema, classify it as `MISLEADING_QUERY`.
 - **Incomplete Queries:** If the question is related to the database schema but references unspecified values (e.g., "the following", "these", "those") without providing them, classify as `GENERAL`.
 - **Time-related Queries:** Don't rephrase time-related information in the user's question.
+- **Multilingual Entity Matching:** Database values (`product_name`, `category`, `city`, `country`, `order_status`, `payment_method`) are typically stored in English. If the user writes product/brand/category/city names in Russian or slang (e.g., "мак"/"мака"/"макбук" = Mac/MacBook, "айфон" = iPhone, "айпад" = iPad, "самсунг" = Samsung, "москва" = Moscow), ALWAYS classify as `TEXT_TO_SQL` against the relevant table (e.g. `public_sales`) and include the English name/keyword in `rephrased_question`.
 
 ### Intent Definitions ###
 

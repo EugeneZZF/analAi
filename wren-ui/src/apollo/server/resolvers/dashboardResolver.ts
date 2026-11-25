@@ -84,10 +84,16 @@ export class DashboardResolver {
     if (!response) {
       throw new Error(`Thread response not found. responseId: ${responseId}`);
     }
-    if (!Object.keys(ChartType).includes(itemType)) {
+    const isHtmlPin = itemType === DashboardItemType.TABLE;
+    if (!isHtmlPin && !Object.keys(ChartType).includes(itemType)) {
       throw new Error(`Chart type not supported. responseId: ${responseId}`);
     }
-    if (!response.chartDetail?.chartSchema) {
+    if (isHtmlPin && !response.sql) {
+      throw new Error(
+        `SQL not found in thread response. responseId: ${responseId}`,
+      );
+    }
+    if (!isHtmlPin && !response.chartDetail?.chartSchema) {
       throw new Error(
         `Chart schema not found in thread response. responseId: ${responseId}`,
       );
@@ -105,11 +111,19 @@ export class DashboardResolver {
       refresh: true,
     });
 
+    const chartSchema = isHtmlPin
+      ? {
+          mode: 'html_dashboard',
+          title: response.question || 'HTML Dashboard',
+          question: response.question || '',
+        }
+      : response.chartDetail?.chartSchema;
+
     return await ctx.dashboardService.createDashboardItem({
       dashboardId: dashboard.id,
       type: itemType,
       sql: response.sql,
-      chartSchema: response.chartDetail?.chartSchema,
+      chartSchema,
     });
   }
 

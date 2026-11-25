@@ -14,6 +14,7 @@ import useTextBasedAnswerStreamTask from '@/hooks/useTextBasedAnswerStreamTask';
 import { Props as AnswerResultProps } from '@/components/pages/home/promptThread/AnswerResult';
 import MarkdownBlock from '@/components/editor/MarkdownBlock';
 import PreviewData from '@/components/dataPreview/PreviewData';
+import HtmlDashboardAnswer from '@/components/pages/home/promptThread/HtmlDashboardAnswer';
 import { AdjustAnswerDropdown } from '@/components/diagram/CustomDropdown';
 import { usePreviewDataMutation } from '@/apollo/client/graphql/home.generated';
 import { ThreadResponseAnswerStatus } from '@/apollo/client/graphql/__types__';
@@ -225,23 +226,28 @@ export default function TextBasedAnswer(props: AnswerResultProps) {
         )}
         {allowPreviewData ? (
           <div className="mt-6">
-            <Button
-              size="small"
-              icon={
-                <BinocularsIcon
-                  style={{
-                    paddingBottom: 2,
-                    marginRight: 8,
-                  }}
-                />
-              }
-              loading={previewDataResult.loading}
-              onClick={onPreviewData}
-              data-ph-capture="true"
-              data-ph-capture-attribute-name="cta_text-answer_preview_data"
-            >
-              View results
-            </Button>
+            {!isStreaming && getAnswerIsFinished(status) && (
+              <HtmlDashboardAnswer {...props} embedded />
+            )}
+            <div className="mt-4">
+              <Button
+                size="small"
+                icon={
+                  <BinocularsIcon
+                    style={{
+                      paddingBottom: 2,
+                      marginRight: 8,
+                    }}
+                  />
+                }
+                loading={previewDataResult.loading}
+                onClick={onPreviewData}
+                data-ph-capture="true"
+                data-ph-capture-attribute-name="cta_text-answer_preview_data"
+              >
+                View results
+              </Button>
+            </div>
 
             <div className="mt-2 mb-3" data-guideid="text-answer-preview-data">
               {hasPreviewData && (

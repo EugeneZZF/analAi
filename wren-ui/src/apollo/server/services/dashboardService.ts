@@ -169,7 +169,11 @@ export class DashboardService implements IDashboardService {
   public async createDashboardItem(
     input: CreateDashboardItemInput,
   ): Promise<DashboardItem> {
-    const layout = await this.calculateNewLayout(input.dashboardId);
+    const isFullWidth = input.type === DashboardItemType.TABLE;
+    const layout = await this.calculateNewLayout(
+      input.dashboardId,
+      isFullWidth,
+    );
     return await this.dashboardItemRepository.createOne({
       dashboardId: input.dashboardId,
       type: input.type,
@@ -231,12 +235,24 @@ export class DashboardService implements IDashboardService {
 
   private async calculateNewLayout(
     dashboardId: number,
+    isFullWidth = false,
   ): Promise<DashboardItemLayout> {
     const dashboardItems = await this.dashboardItemRepository.findAllBy({
       dashboardId,
     });
     const allLayouts = dashboardItems.map((item) => item.layout);
-    if (allLayouts.length === 0) return { x: 0, y: 0, w: 3, h: 2 };
+    if (allLayouts.length === 0) {
+      return isFullWidth
+        ? { x: 0, y: 0, w: 6, h: 3 }
+        : { x: 0, y: 0, w: 3, h: 2 };
+    }
+
+    if (isFullWidth) {
+      const nextY = Math.max(
+        ...allLayouts.map((layout) => layout.y + layout.h),
+      );
+      return { x: 0, y: nextY, w: 6, h: 3 };
+    }
 
     const columnCount = 6;
     const halfLayoutX = columnCount / 2;
